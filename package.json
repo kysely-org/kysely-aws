@@ -1,0 +1,65 @@
+{
+  "name": "@kysely-org/aws",
+  "version": "0.0.0",
+  "description": "Tools for integrating Kysely with AWS-exclusive services and APIs that consume SQL",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kysely-org/kysely-aws.git"
+  },
+  "homepage": "https://kysely.dev",
+  "keywords": [
+    "aws",
+    "amazon web services",
+    "kysely",
+    "sql",
+    "type-safe",
+    "query",
+    "builder",
+    "data",
+    "api",
+    "blocks",
+    "postgres",
+    "postgresql",
+    "mysql",
+    "dialect"
+  ],
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "NOTICE"
+  ],
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsdown",
+    "prepublishOnly": "pnpm build",
+    "script:align-versions": "node --experimental-strip-types scripts/align-versions.ts",
+    "test": "vitest",
+    "version": "pnpm script:align-versions && git add ."
+  },
+  "author": "Igal Klebanov <igalklebanov@gmail.com>",
+  "contributors": [
+    "Igal Klebanov <igalklebanov@gmail.com>"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "@arethetypeswrong/core": "0.18.4",
+    "@biomejs/biome": "2.5.2",
+    "@tsconfig/node24": "24.0.4",
+    "@types/node": "26.1.0",
+    "kysely": "0.29.2",
+    "pathe": "2.0.3",
+    "publint": "0.3.21",
+    "std-env": "4.1.0",
+    "tsdown": "0.22.3",
+    "typescript": "6.0.3",
+    "vitest": "4.1.9"
+  },
+  "packageManager": "pnpm@11.9.0+sha512.bd682d5d03fe525ef7c9fd6780c6884d1e756ac4c9c9fe00c538782824310dcf90e3ddc4f53835f06dfaebd5085e41855e0bcbb3b60de2ac5bbab89e5036f03b"
+}

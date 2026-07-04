@@ -1,0 +1,19 @@
+{
+	"$schema": "https://jsr.io/schema/config-file.v1.json",
+	"name": "@kysely/aws",
+	"version": "0.0.0",
+	"license": "MIT",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"publish": {
+		"include": [
+			"LICENSE",
+			"NOTICE",
+			"README.md",
+			"src/**/*.ts",
+			"tsconfig.base.json",
+			"tsconfig.json"
+		]
+	}
+}

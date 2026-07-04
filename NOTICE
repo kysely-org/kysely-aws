@@ -1,0 +1,15 @@
+@kysely-org/aws
+Copyright (c) 2026 Kysely
+
+This product is licensed under the MIT License (see the LICENSE file).
+
+THIS IS NOT AN OFFICIAL AWS OR AMAZON WEB SERVICES PROJECT. This open-source
+project is maintained by the Kysely organization in good faith to provide an
+integration between Kysely — the TypeScript query builder — and AWS-exclusive
+data services and APIs that accept SQL queries.
+
+AWS and Amazon Web Services are trademarks of Amazon.com, Inc. or its affiliates.
+Use of these names is nominative, solely to describe compatibility, and does not
+imply any affiliation with, sponsorship by, or endorsement from Amazon.com, Inc.
+or its affiliates. All other trademarks are the property of their respective
+owners.
