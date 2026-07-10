@@ -41,11 +41,17 @@
     "prepublishOnly": "pnpm build",
     "script:align-versions": "node --experimental-strip-types scripts/align-versions.ts",
     "test": "vitest",
+    "test:infra:bootstrap": "cdk bootstrap",
+    "test:infra:deploy": "cdk deploy",
+    "test:infra:destroy": "cdk destroy",
+    "test:infra:diff": "cdk diff",
+    "test:infra:synth": "cdk synth",
     "version": "pnpm script:align-versions && git add ."
   },
   "author": "Igal Klebanov <igalklebanov@gmail.com>",
   "contributors": [
-    "Igal Klebanov <igalklebanov@gmail.com>"
+    "Igal Klebanov <igalklebanov@gmail.com>",
+    "Rory Reid <rory-reid@outlook.com>"
   ],
   "license": "MIT",
   "devDependencies": {
@@ -53,6 +59,9 @@
     "@biomejs/biome": "2.5.2",
     "@tsconfig/node24": "24.0.4",
     "@types/node": "26.1.0",
+    "aws-cdk": "2.1129.0",
+    "aws-cdk-lib": "2.261.0",
+    "constructs": "10.6.0",
     "kysely": "0.29.2",
     "pathe": "2.0.3",
     "publint": "0.3.21",
