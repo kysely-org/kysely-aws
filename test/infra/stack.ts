@@ -5,7 +5,6 @@ import {
 	Stack,
 	type StackProps,
 } from 'aws-cdk-lib'
-import type { Construct } from 'constructs'
 import { SubnetType, Vpc } from 'aws-cdk-lib/aws-ec2'
 import {
 	AuroraPostgresEngineVersion,
@@ -13,6 +12,7 @@ import {
 	DatabaseCluster,
 	DatabaseClusterEngine,
 } from 'aws-cdk-lib/aws-rds'
+import type { Construct } from 'constructs'
 
 const dbName = 'kyselytest'
 

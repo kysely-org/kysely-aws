@@ -4,7 +4,7 @@ import { defineConfig } from 'vitest/config'
 export default defineConfig({
 	test: {
 		allowOnly: !isCI,
-		// globalSetup: ['./vitest.setup.ts'],
+		globalSetup: ['./vitest.setup.ts'],
 		typecheck: {
 			enabled: true,
 			ignoreSourceErrors: true,

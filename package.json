@@ -54,8 +54,14 @@
     "Rory Reid <rory-reid@outlook.com>"
   ],
   "license": "MIT",
+	"peerDependencies": {
+		"kysely": ">= 0.29.0",
+		"@aws-sdk/client-rds-data": "^3.0.0"
+	},
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.4",
+    "@aws-sdk/client-rds-data": "^3.0.0",
+    "dotenv": "^16.0.0",
     "@biomejs/biome": "2.5.2",
     "@tsconfig/node24": "24.0.4",
     "@types/node": "26.1.0",
