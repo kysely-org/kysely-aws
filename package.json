@@ -40,6 +40,8 @@
     "build": "tsdown",
     "prepublishOnly": "pnpm build",
     "script:align-versions": "node --experimental-strip-types scripts/align-versions.ts",
+		"lint": "biome check",
+		"lint:fix": "biome check --write",
     "test": "vitest",
     "test:infra:bootstrap": "cdk bootstrap",
     "test:infra:deploy": "cdk deploy",
@@ -54,20 +56,20 @@
     "Rory Reid <rory-reid@outlook.com>"
   ],
   "license": "MIT",
-	"peerDependencies": {
-		"kysely": ">= 0.29.0",
-		"@aws-sdk/client-rds-data": "^3.0.0"
-	},
+  "peerDependencies": {
+    "@aws-sdk/client-rds-data": "^3.0.0",
+    "kysely": ">= 0.29.0"
+  },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.4",
     "@aws-sdk/client-rds-data": "^3.0.0",
-    "dotenv": "^16.0.0",
     "@biomejs/biome": "2.5.2",
     "@tsconfig/node24": "24.0.4",
     "@types/node": "26.1.0",
     "aws-cdk": "2.1129.0",
     "aws-cdk-lib": "2.261.0",
     "constructs": "10.6.0",
+    "dotenv": "^16.0.0",
     "kysely": "0.29.2",
     "pathe": "2.0.3",
     "publint": "0.3.21",

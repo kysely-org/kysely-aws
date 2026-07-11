@@ -10,7 +10,8 @@ const statements = [
 	`CREATE TABLE IF NOT EXISTS person (
 		id         BIGSERIAL NOT NULL PRIMARY KEY,
 		first_name TEXT      NOT NULL,
-		last_name  TEXT      NULL
+		last_name  TEXT      NULL,
+		age        NUMERIC   NOT NULL
 	)`,
 	`CREATE TABLE IF NOT EXISTS pet (
 		id       BIGSERIAL NOT NULL PRIMARY KEY,
