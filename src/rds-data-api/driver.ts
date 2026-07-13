@@ -5,9 +5,9 @@ import type {
 	QueryCompiler,
 	TransactionSettings,
 } from 'kysely'
-import { RdsDataApiDatabaseConnection } from './database-connection'
+import { RDSDataAPIDatabaseConnection } from './database-connection'
 
-export class RdsDataApiDriver implements Driver {
+export class RDSDataAPIDriver implements Driver {
 	init(_options?: AbortableOperationOptions): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
@@ -15,7 +15,7 @@ export class RdsDataApiDriver implements Driver {
 	acquireConnection(
 		_options?: AbortableOperationOptions,
 	): Promise<DatabaseConnection> {
-		return Promise.resolve(new RdsDataApiDatabaseConnection())
+		return Promise.resolve(new RDSDataAPIDatabaseConnection())
 	}
 
 	beginTransaction(

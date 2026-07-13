@@ -6,7 +6,7 @@ import type {
 	QueryResult,
 } from 'kysely'
 
-export class RdsDataApiDatabaseConnection implements DatabaseConnection {
+export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	cancelQuery?(
 		_controlConnectionProvider: ControlConnectionProvider,
 	): Promise<void> {

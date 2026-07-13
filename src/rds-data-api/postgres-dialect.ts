@@ -8,12 +8,12 @@ import {
 	PostgresQueryCompiler,
 	type QueryCompiler,
 } from 'kysely'
-import { RdsDataApiDialectAdapter } from './postgres/dialect-adapter'
-import { RdsDataApiDriver } from './postgres/driver'
+import { RDSDataAPIDialectAdapter } from './dialect-adapter'
+import { RDSDataAPIDriver } from './driver'
 
-export class PostgresDataApiDialect implements Dialect {
+export class RDSDataAPIPostgresDialect implements Dialect {
 	createDriver(): Driver {
-		return new RdsDataApiDriver()
+		return new RDSDataAPIDriver()
 	}
 
 	createQueryCompiler(): QueryCompiler {
@@ -21,7 +21,7 @@ export class PostgresDataApiDialect implements Dialect {
 	}
 
 	createAdapter(): DialectAdapter {
-		return new RdsDataApiDialectAdapter()
+		return new RDSDataAPIDialectAdapter()
 	}
 
 	createIntrospector(db: Kysely<unknown>): DatabaseIntrospector {

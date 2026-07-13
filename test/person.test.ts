@@ -1,5 +1,5 @@
 import { type Generated, Kysely } from 'kysely'
-import { PostgresDataApiDialect } from '../src/rds-data-api/postgres-data-api-dialect'
+import { RDSDataAPIPostgresDialect } from '../src/rds-data-api/postgres-dialect'
 
 interface Database {
 	person: {
@@ -11,7 +11,7 @@ interface Database {
 }
 
 const db = new Kysely<Database>({
-	dialect: new PostgresDataApiDialect(),
+	dialect: new RDSDataAPIPostgresDialect(),
 })
 
 describe('smoke tests', () => {

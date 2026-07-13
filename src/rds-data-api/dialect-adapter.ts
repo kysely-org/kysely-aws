@@ -1,6 +1,6 @@
 import type { DialectAdapter, Kysely, MigrationLockOptions } from 'kysely'
 
-export class RdsDataApiDialectAdapter implements DialectAdapter {
+export class RDSDataAPIDialectAdapter implements DialectAdapter {
 	supportsCreateIfNotExists?: boolean | undefined
 	supportsMultipleConnections?: boolean | undefined
 	supportsTransactionalDdl?: boolean | undefined
