@@ -1,7 +1,3 @@
-import { config } from 'dotenv'
-
-config({ path: '.env.local' })
-
 export interface MigrationConfig {
 	clusterArn: string
 	secretArn: string
