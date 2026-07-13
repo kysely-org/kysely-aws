@@ -5,7 +5,7 @@ import type {
 	QueryCompiler,
 	TransactionSettings,
 } from 'kysely'
-import { RdsDataApiDatabaseConnection } from './DatabaseConnection'
+import { RdsDataApiDatabaseConnection } from './database-connection'
 
 export class RdsDataApiDriver implements Driver {
 	init(_options?: AbortableOperationOptions): Promise<void> {

@@ -1,5 +1,5 @@
 import { type Generated, Kysely } from 'kysely'
-import { PostgresDataApiDialect } from '../src/rds-data-api/PostgresDataApiDialect'
+import { PostgresDataApiDialect } from '../src/rds-data-api/postgres-data-api-dialect'
 
 interface Database {
 	person: {

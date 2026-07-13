@@ -6,10 +6,10 @@ import type {
 	Kysely,
 	QueryCompiler,
 } from 'kysely'
-import { RdsDataApiDatabaseIntrospector } from './postgres/DatabaseIntrospector'
-import { RdsDataApiDialectAdapter } from './postgres/DialectAdapter'
-import { RdsDataApiDriver } from './postgres/Driver'
-import { RdsDataApiQueryCompiler } from './postgres/QueryCompiler'
+import { RdsDataApiDatabaseIntrospector } from './postgres/database-introspector'
+import { RdsDataApiDialectAdapter } from './postgres/dialect-adapter'
+import { RdsDataApiDriver } from './postgres/driver'
+import { RdsDataApiQueryCompiler } from './postgres/query-compiler'
 
 export class PostgresDataApiDialect implements Dialect {
 	createDriver(): Driver {
