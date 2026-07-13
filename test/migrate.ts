@@ -45,15 +45,14 @@ async function waitForDb(
 
 	while (true) {
 		try {
-			await client.send(
+			return void (await client.send(
 				new ExecuteStatementCommand({
 					resourceArn: config.clusterArn,
 					secretArn: config.secretArn,
 					database: config.databaseName,
 					sql: 'SELECT 1',
 				}),
-			)
-			return
+			))
 		} catch (error) {
 			attempt++
 

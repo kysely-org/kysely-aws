@@ -1,15 +1,15 @@
-import type {
-	DatabaseIntrospector,
-	Dialect,
-	DialectAdapter,
-	Driver,
-	Kysely,
-	QueryCompiler,
+import {
+	type DatabaseIntrospector,
+	type Dialect,
+	type DialectAdapter,
+	type Driver,
+	type Kysely,
+	PostgresIntrospector,
+	PostgresQueryCompiler,
+	type QueryCompiler,
 } from 'kysely'
-import { RdsDataApiDatabaseIntrospector } from './postgres/database-introspector'
 import { RdsDataApiDialectAdapter } from './postgres/dialect-adapter'
 import { RdsDataApiDriver } from './postgres/driver'
-import { RdsDataApiQueryCompiler } from './postgres/query-compiler'
 
 export class PostgresDataApiDialect implements Dialect {
 	createDriver(): Driver {
@@ -17,14 +17,14 @@ export class PostgresDataApiDialect implements Dialect {
 	}
 
 	createQueryCompiler(): QueryCompiler {
-		return new RdsDataApiQueryCompiler()
+		return new PostgresQueryCompiler()
 	}
 
 	createAdapter(): DialectAdapter {
 		return new RdsDataApiDialectAdapter()
 	}
 
-	createIntrospector(_db: Kysely<unknown>): DatabaseIntrospector {
-		return new RdsDataApiDatabaseIntrospector()
+	createIntrospector(db: Kysely<unknown>): DatabaseIntrospector {
+		return new PostgresIntrospector(db)
 	}
 }
