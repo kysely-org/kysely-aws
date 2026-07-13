@@ -40,8 +40,8 @@
     "build": "tsdown",
     "prepublishOnly": "pnpm build",
     "script:align-versions": "node --experimental-strip-types scripts/align-versions.ts",
-		"lint": "biome check",
-		"lint:fix": "biome check --write",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
     "test": "vitest",
     "test:infra:bootstrap": "cdk bootstrap",
     "test:infra:deploy": "cdk deploy",
@@ -57,7 +57,7 @@
   ],
   "license": "MIT",
   "peerDependencies": {
-    "@aws-sdk/client-rds-data": "^3.0.0",
+    "@aws-sdk/client-rds-data": "3.0.0",
     "kysely": ">= 0.29.0"
   },
   "devDependencies": {
