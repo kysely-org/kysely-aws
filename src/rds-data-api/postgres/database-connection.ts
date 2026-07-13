@@ -10,29 +10,24 @@ export class RdsDataApiDatabaseConnection implements DatabaseConnection {
 	cancelQuery?(
 		_controlConnectionProvider: ControlConnectionProvider,
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	collectSessionInfo?(): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	executeQuery<R>(
 		_compiledQuery: CompiledQuery,
 		_options?: AbortableOperationOptions,
 	): Promise<QueryResult<R>> {
-		return Promise.resolve({
-			numAffectedRows: 0n,
-			numChangedRows: 0n,
-			insertId: 0n,
-			rows: [],
-		})
+		throw new Error('Method not implemented.')
 	}
 
 	killSession?(
 		_controlConnectionProvider: ControlConnectionProvider,
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	streamQuery<R>(

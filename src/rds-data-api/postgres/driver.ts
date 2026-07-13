@@ -9,7 +9,7 @@ import { RdsDataApiDatabaseConnection } from './database-connection'
 
 export class RdsDataApiDriver implements Driver {
 	init(_options?: AbortableOperationOptions): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	acquireConnection(
@@ -22,15 +22,15 @@ export class RdsDataApiDriver implements Driver {
 		_connection: DatabaseConnection,
 		_settings: TransactionSettings,
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	commitTransaction(_connection: DatabaseConnection): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	rollbackTransaction(_connection: DatabaseConnection): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	savepoint?(
@@ -38,7 +38,7 @@ export class RdsDataApiDriver implements Driver {
 		_savepointName: string,
 		_compileQuery: QueryCompiler['compileQuery'],
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	rollbackToSavepoint?(
@@ -46,7 +46,7 @@ export class RdsDataApiDriver implements Driver {
 		_savepointName: string,
 		_compileQuery: QueryCompiler['compileQuery'],
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	releaseSavepoint?(
@@ -54,17 +54,17 @@ export class RdsDataApiDriver implements Driver {
 		_savepointName: string,
 		_compileQuery: QueryCompiler['compileQuery'],
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	releaseConnection(
 		_connection: DatabaseConnection,
 		_options?: AbortableOperationOptions,
 	): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 
 	destroy(_options?: AbortableOperationOptions): Promise<void> {
-		return Promise.resolve()
+		throw new Error('Method not implemented.')
 	}
 }

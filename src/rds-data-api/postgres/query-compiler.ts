@@ -7,11 +7,6 @@ import type {
 
 export class RdsDataApiQueryCompiler implements QueryCompiler {
 	compileQuery(_node: RootOperationNode, _queryId: QueryId): CompiledQuery {
-		return {
-			query: { kind: 'SelectQueryNode' },
-			parameters: [],
-			queryId: { queryId: '' },
-			sql: 'SELECT 1',
-		}
+		throw new Error('Method not implemented.')
 	}
 }
