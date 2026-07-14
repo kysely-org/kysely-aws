@@ -1,6 +1,7 @@
 # Allow (true) or disallow (false) script execution.
 # https://pnpm.io/settings#allowbuilds
 allowBuilds:
+  esbuild: false
 
 # Deduplicate peer dependencies.
 # see: https://github.com/pnpm/pnpm/issues/11070

@@ -27,16 +27,6 @@ Use of these names is nominative, solely to describe compatibility, and does not
 imply any affiliation with, sponsorship by, or endorsement from Amazon.com, Inc.
 or its affiliates.
 
-# Local development and testing
-
-If integration testing against real AWS services, you should:
-
-1. Ensure you are authenticated with the AWS CLI locally.
-2. Copy [.env.example](./.env.example) to .env.local and fill in the AWS
-   account/region to deploy to.
-3. Run `pnpm test:infra:bootstrap`
-4. Run `pnpm test:infra:deploy`
-
 # All contributors
 
 <p align="center">

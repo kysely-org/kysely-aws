@@ -1,5 +1,5 @@
 {
-	"app": "node --env-file-if-exists=.env.local --experimental-strip-types test/infra/app.ts",
+	"app": "node --env-file-if-exists=.env.local --import tsx test/infra/app.ts",
 	"output": "cdk.out",
 	"watch": {
 		"include": ["test/infra/**"]

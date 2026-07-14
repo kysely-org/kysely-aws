@@ -168,4 +168,16 @@ Please write in your own human voice. LLM-generated walls of text in PR descript
 
 #### Testing
 
-1. write tests @ [/test/\*](https://github.com/kysely-org/kysely-aws/tree/main/test).
+##### Initial setup
+
+1. ensure you are authenticated with the AWS CLI locally.
+1. copy [.env.example](./.env.example) to .env.local and fill in the AWS
+   account/region to deploy to.
+1. run `pnpm test:infra:bootstrap`
+1. run `pnpm test:infra:deploy`
+
+##### Testing against the real service
+
+1. populate the DB Name/Cluster arn/Secret Arn values in [.env.local](./.env.local)
+   - the deploy script should have written these to your output.
+1. write tests @ [/test/\*](https://github.com/kysely-org/kysely-aws/tree/main/test)
