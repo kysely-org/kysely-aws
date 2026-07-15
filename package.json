@@ -69,7 +69,7 @@
     "aws-cdk": "2.1129.0",
     "aws-cdk-lib": "2.261.0",
     "constructs": "10.6.0",
-    "kysely": "0.29.2",
+    "kysely": "0.29.3",
     "pathe": "2.0.3",
     "publint": "0.3.21",
     "std-env": "4.1.0",
