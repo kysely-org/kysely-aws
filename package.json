@@ -65,7 +65,7 @@
     "@aws-sdk/client-rds-data": "^3.0.0",
     "@biomejs/biome": "2.5.2",
     "@tsconfig/node24": "24.0.4",
-    "@types/node": "26.1.0",
+    "@types/node": "26.1.1",
     "aws-cdk": "2.1129.0",
     "aws-cdk-lib": "2.261.0",
     "constructs": "10.6.0",
