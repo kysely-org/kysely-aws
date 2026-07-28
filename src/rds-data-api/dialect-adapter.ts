@@ -1,11 +1,11 @@
 import type { DialectAdapter, Kysely, MigrationLockOptions } from 'kysely'
 
 export class RDSDataAPIDialectAdapter implements DialectAdapter {
-	supportsCreateIfNotExists?: boolean | undefined
-	supportsMultipleConnections?: boolean | undefined
-	supportsTransactionalDdl?: boolean | undefined
-	supportsReturning?: boolean | undefined
-	supportsOutput?: boolean | undefined
+	supportsCreateIfNotExists: boolean = true
+	supportsMultipleConnections: boolean = true
+	supportsTransactionalDdl: boolean = false // TODO - true when transactions supported
+	supportsReturning: boolean = true
+	supportsOutput: boolean = false
 
 	acquireMigrationLock(
 		_db: Kysely<unknown>,

@@ -36,3 +36,21 @@ or its affiliates.
     </br>
     <span>Want to contribute? Check out our <a href="./CONTRIBUTING.md" >contribution guidelines</a>.</span>
 </p>
+
+# Current limitations
+
+This is in very early development. Current target delivery is a Postgres RDS Data API dialect with MySQL to follow soon after.
+
+The Postgres RDS Data API Dialect has the following known limitations:
+
+- No support for transactions
+- Only supports string, integer and null types
+- No support for kysely migrations
+- Generic "Not implemented" errors across unimplemented and unsupported features
+- Savepoints
+
+What it does support today:
+
+- Basic DML
+- Custom type mapping
+- Custom RDS Data API client factory function

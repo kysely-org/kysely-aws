@@ -1,33 +1,96 @@
+import {
+	type ColumnMetadata,
+	ExecuteStatementCommand,
+	type RDSDataClient,
+} from '@aws-sdk/client-rds-data'
 import type {
 	AbortableOperationOptions,
 	CompiledQuery,
-	ControlConnectionProvider,
 	DatabaseConnection,
 	QueryResult,
 } from 'kysely'
+import type { RDSDataAPITypeMapper } from './type-mapper'
+
+export type RDSDataAPIConnectionDetails = {
+	resourceArn: string
+	secretArn: string
+	database: string
+}
 
 export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
-	cancelQuery?(
-		_controlConnectionProvider: ControlConnectionProvider,
-	): Promise<void> {
-		throw new Error('Method not implemented.')
+	readonly #client: RDSDataClient
+	readonly #connection: RDSDataAPIConnectionDetails
+	readonly #typeMapper: RDSDataAPITypeMapper
+
+	constructor({
+		client,
+		connection,
+		typeMapper,
+	}: {
+		client: RDSDataClient
+		connection: RDSDataAPIConnectionDetails
+		typeMapper: RDSDataAPITypeMapper
+	}) {
+		this.#client = client
+		this.#connection = connection
+		this.#typeMapper = typeMapper
 	}
 
-	collectSessionInfo?(): Promise<void> {
-		throw new Error('Method not implemented.')
-	}
-
-	executeQuery<R>(
-		_compiledQuery: CompiledQuery,
+	async executeQuery<R>(
+		compiledQuery: CompiledQuery,
 		_options?: AbortableOperationOptions,
 	): Promise<QueryResult<R>> {
-		throw new Error('Method not implemented.')
-	}
+		const parameters = compiledQuery.parameters.map((value, index) => ({
+			name: `${index + 1}`,
+			...this.#typeMapper.mapQueryParameter(value),
+		}))
 
-	killSession?(
-		_controlConnectionProvider: ControlConnectionProvider,
-	): Promise<void> {
-		throw new Error('Method not implemented.')
+		const response = await this.#client.send(
+			new ExecuteStatementCommand({
+				resourceArn: this.#connection.resourceArn,
+				secretArn: this.#connection.secretArn,
+				database: this.#connection.database,
+				sql: compiledQuery.sql,
+				parameters,
+				includeResultMetadata: true,
+				resultSetOptions: {
+					decimalReturnType: 'STRING',
+					longReturnType: 'LONG',
+				},
+			}),
+		)
+
+		const columnNames = (response.columnMetadata ?? []).map((metadata, i) => {
+			if (!metadata?.name) {
+				throw new Error(`Missing column metadata name for column ${i}`)
+			}
+			return metadata.name
+		})
+		const records = response.records
+		const rows: R[] = []
+		for (const record of records ?? []) {
+			const row: Record<string, unknown> = {}
+			for (const [i, field] of record.entries()) {
+				// Intentionally "dangerous" coercions here to avoid re-testing the
+				// validity of column metadata per row per column in the result set. It
+				// is only actually dangerous if the RDS Data api starts to perform some
+				// wildly inconsistent behaviours (not returning one metadata per column
+				// or returning variable amounts of columns per row).
+				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
+					field,
+					response.columnMetadata?.[i] as ColumnMetadata,
+				)
+			}
+
+			rows.push(row as R)
+		}
+
+		return {
+			rows,
+			...(response.numberOfRecordsUpdated !== undefined
+				? { numAffectedRows: BigInt(response.numberOfRecordsUpdated) }
+				: {}),
+		}
 	}
 
 	streamQuery<R>(

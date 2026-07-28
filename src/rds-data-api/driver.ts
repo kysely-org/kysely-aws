@@ -1,3 +1,4 @@
+import type { RDSDataClient } from '@aws-sdk/client-rds-data'
 import type {
 	AbortableOperationOptions,
 	DatabaseConnection,
@@ -6,16 +7,37 @@ import type {
 	TransactionSettings,
 } from 'kysely'
 import { RDSDataAPIDatabaseConnection } from './database-connection'
+import type { RDSDataAPIPostgresDialectConfig } from './postgres-dialect'
+import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIDriver implements Driver {
-	init(_options?: AbortableOperationOptions): Promise<void> {
-		throw new Error('Method not implemented.')
+	readonly #createClient: () => RDSDataClient | Promise<RDSDataClient>
+	readonly #connection: RDSDataAPIPostgresDialectConfig['connection']
+	readonly #typeMapper: RDSDataAPITypeMapper
+	#client: RDSDataClient | undefined
+
+	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
+		this.#createClient = config.createClient
+		this.#connection = config.connection
+		this.#typeMapper = config.typeMapper
 	}
 
-	acquireConnection(
+	async init(_options?: AbortableOperationOptions): Promise<void> {
+		this.#client = await this.#createClient()
+	}
+
+	async acquireConnection(
 		_options?: AbortableOperationOptions,
 	): Promise<DatabaseConnection> {
-		return Promise.resolve(new RDSDataAPIDatabaseConnection())
+		if (!this.#client) {
+			throw new Error('Driver not initialised')
+		}
+
+		return new RDSDataAPIDatabaseConnection({
+			client: this.#client,
+			connection: this.#connection,
+			typeMapper: this.#typeMapper,
+		})
 	}
 
 	beginTransaction(
@@ -57,14 +79,14 @@ export class RDSDataAPIDriver implements Driver {
 		throw new Error('Method not implemented.')
 	}
 
-	releaseConnection(
+	async releaseConnection(
 		_connection: DatabaseConnection,
 		_options?: AbortableOperationOptions,
 	): Promise<void> {
-		throw new Error('Method not implemented.')
+		// noop - not a persistent connection
 	}
 
-	destroy(_options?: AbortableOperationOptions): Promise<void> {
-		throw new Error('Method not implemented.')
+	async destroy(_options?: AbortableOperationOptions): Promise<void> {
+		this.#client?.destroy()
 	}
 }
