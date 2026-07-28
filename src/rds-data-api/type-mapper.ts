@@ -27,7 +27,7 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 		throw new Error(`Unsupported parameter type ${typeof value}`)
 	}
 
-	mapResponseField = (field: Field, _columnMetadata: ColumnMetadata) => {
+	mapResponseField = (field: Field, columnMetadata: ColumnMetadata) => {
 		if (field.stringValue !== undefined) {
 			return field.stringValue
 		}
@@ -40,6 +40,6 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 			return null
 		}
 
-		throw new Error(`Unsupported field type ${JSON.stringify(field)}`)
+		throw new Error(`Unsupported field type for field ${columnMetadata.name}`)
 	}
 }
