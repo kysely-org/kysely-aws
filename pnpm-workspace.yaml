@@ -15,6 +15,9 @@ engineStrict: true
 # https://pnpm.io/settings#ignoreworkspacerootcheck
 ignoreWorkspaceRootCheck: true
 
+minimumReleaseAgeExclude:
+  - postcss@8.5.18
+
 # fail and don't fallback to "too new" version of packages when none of their other
 # versions match `minimumReleaseAge` range (default is 1 day).
 # https://pnpm.io/settings#minimumreleaseagestrict
