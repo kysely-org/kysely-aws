@@ -1,0 +1,12 @@
+# Local AWS emulator for running the test suite without a real AWS account.
+# See CONTRIBUTING.md > Testing > Testing locally with Floci.
+services:
+  floci:
+    image: floci/floci:latest
+    user: root
+    ports:
+      - '4566:4566'
+      # RDS proxy ports for the Postgres containers Floci spins up.
+      - '7001-7099:7001-7099'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
