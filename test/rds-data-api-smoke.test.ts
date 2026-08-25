@@ -1,11 +1,9 @@
-import {
-	ExecuteStatementCommand,
-	RDSDataClient,
-} from '@aws-sdk/client-rds-data'
+import { ExecuteStatementCommand } from '@aws-sdk/client-rds-data'
 import { faker } from '@faker-js/faker'
 import { type Generated, Kysely, sql } from 'kysely'
 import { expect } from 'vitest'
 import { RDSDataAPIPostgresDialect } from '../src/rds-data-api/postgres-dialect'
+import { createTestClient } from './client'
 import { getMigrationConfig } from './env'
 
 type Person = {
@@ -34,7 +32,7 @@ type Database = {
 }
 
 const migrationConfig = getMigrationConfig()
-const client = new RDSDataClient({ region: migrationConfig.region })
+const client = createTestClient(migrationConfig.region)
 
 const connection = {
 	resourceArn: migrationConfig.clusterArn,

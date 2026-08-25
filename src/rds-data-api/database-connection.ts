@@ -9,6 +9,7 @@ import type {
 	DatabaseConnection,
 	QueryResult,
 } from 'kysely'
+import { parameterName } from './postgres-query-compiler'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export type RDSDataAPIConnectionDetails = {
@@ -41,7 +42,7 @@ export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		_options?: AbortableOperationOptions,
 	): Promise<QueryResult<R>> {
 		const parameters = compiledQuery.parameters.map((value, index) => ({
-			name: `${index + 1}`,
+			name: parameterName(index + 1),
 			...this.#typeMapper.mapQueryParameter(value),
 		}))
 

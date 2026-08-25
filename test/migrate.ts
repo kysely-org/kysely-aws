@@ -1,7 +1,5 @@
-import {
-	ExecuteStatementCommand,
-	RDSDataClient,
-} from '@aws-sdk/client-rds-data'
+import { ExecuteStatementCommand } from '@aws-sdk/client-rds-data'
+import { createTestClient } from './client'
 import type { MigrationConfig } from './env'
 
 const statements = [
@@ -73,7 +71,7 @@ async function waitForDb(
 }
 
 export async function migrate(config: MigrationConfig): Promise<void> {
-	const client = new RDSDataClient({ region: config.region })
+	const client = createTestClient(config.region)
 
 	try {
 		await waitForDb(client, config)

@@ -168,7 +168,22 @@ Please write in your own human voice. LLM-generated walls of text in PR descript
 
 #### Testing
 
-##### Initial setup
+##### Testing locally with Floci (no AWS account needed)
+
+[Floci](https://floci.io) is a local AWS emulator that runs a real Postgres
+container behind an RDS Data API-compatible endpoint.
+
+1. ensure Docker is running.
+1. run `pnpm test:floci:up` - starts Floci, creates a local Aurora Postgres
+   cluster + master secret, and writes the connection details to `.env.local`.
+1. run `pnpm test`.
+1. run `pnpm test:floci:down` when you're done.
+
+Note: Floci is not a perfect emulation of the RDS Data API (e.g. it rejects
+`resultSetOptions`, which the tests strip out via `test/client.ts`). Always
+verify against the real service before merging.
+
+##### Initial setup (real AWS)
 
 1. ensure you are authenticated with the AWS CLI locally.
 1. copy [.env.example](./.env.example) to .env.local and fill in the AWS
