@@ -11,6 +11,8 @@ import type { ClientFactory, RDSDataAPIPostgresDialectConfig } from './config'
 import type {
 	CreateExecuteStatementCommand,
 	DataAPIClient,
+	DataAPIColumnMetadata,
+	DataAPIExecuteResult,
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
@@ -137,33 +139,8 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 			}),
 		)
 
-		const columnNames = (response.columnMetadata ?? []).map((metadata, i) => {
-			if (!metadata?.name) {
-				throw new Error(`Missing column metadata name for column ${i}`)
-			}
-			return metadata.name
-		})
-		const records = response.records
-		const rows: R[] = []
-		for (const record of records ?? []) {
-			const row: Record<string, unknown> = {}
-			for (const [i, field] of record.entries()) {
-				// Intentionally "dangerous" coercions here to avoid re-testing the
-				// validity of column metadata per row per column in the result set. It
-				// is only actually dangerous if the RDS Data api starts to perform some
-				// wildly inconsistent behaviours (not returning one metadata per column
-				// or returning variable amounts of columns per row).
-				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
-					field,
-					response.columnMetadata?.[i],
-				)
-			}
-
-			rows.push(row as R)
-		}
-
 		return {
-			rows,
+			rows: this.#getRows<R>(response),
 			...(response.numberOfRecordsUpdated !== undefined
 				? { numAffectedRows: BigInt(response.numberOfRecordsUpdated) }
 				: {}),
@@ -176,5 +153,38 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		_options?: AbortableOperationOptions,
 	): AsyncIterableIterator<QueryResult<R>> {
 		throw new Error('Method not implemented.')
+	}
+
+	#getColumnNames(columnMetadata: DataAPIColumnMetadata[]) {
+		return columnMetadata.map((metadata, i) => {
+			if (!metadata?.name) {
+				throw new Error(`Missing column metadata name for column ${i}`)
+			}
+			return metadata.name
+		})
+	}
+
+	#getRows<R>(executeResult: DataAPIExecuteResult) {
+		const columnNames = this.#getColumnNames(executeResult.columnMetadata ?? [])
+		const records = executeResult.records
+		const rows: R[] = []
+		for (const record of records ?? []) {
+			const row: Record<string, unknown> = {}
+			for (const [i, field] of record.entries()) {
+				// Intentionally "dangerous" coercions here to avoid re-testing the
+				// validity of column metadata per row per column in the result set. It
+				// is only actually dangerous if the RDS Data api starts to perform some
+				// wildly inconsistent behaviours (not returning one metadata per column
+				// or returning variable amounts of columns per row).
+				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
+					field,
+					executeResult.columnMetadata?.[i],
+				)
+			}
+
+			rows.push(row as R)
+		}
+
+		return rows
 	}
 }
