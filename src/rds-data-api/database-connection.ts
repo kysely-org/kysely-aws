@@ -10,6 +10,10 @@ import type {
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
+const resultSetOptions = {
+	decimalReturnType: 'STRING' as const,
+	longReturnType: 'LONG' as const,
+}
 export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	readonly #client: DataAPIClient
 	readonly #typeMapper: RDSDataAPITypeMapper
@@ -39,10 +43,7 @@ export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 				sql: compiledQuery.sql,
 				parameters,
 				includeResultMetadata: true,
-				resultSetOptions: {
-					decimalReturnType: 'STRING',
-					longReturnType: 'LONG',
-				},
+				resultSetOptions,
 			}),
 		)
 
