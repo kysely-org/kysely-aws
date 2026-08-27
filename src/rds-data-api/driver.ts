@@ -1,4 +1,3 @@
-import type { RDSDataClient } from '@aws-sdk/client-rds-data'
 import type {
 	AbortableOperationOptions,
 	DatabaseConnection,
@@ -8,18 +7,26 @@ import type {
 } from 'kysely'
 import { RDSDataAPIDatabaseConnection } from './database-connection'
 import type { RDSDataAPIPostgresDialectConfig } from './postgres-dialect'
+import type {
+	CreateExecuteStatementCommand,
+	DataAPIClient,
+} from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
+export type ClientFactory = () => DataAPIClient | Promise<DataAPIClient>
+
 export class RDSDataAPIDriver implements Driver {
-	readonly #createClient: () => RDSDataClient | Promise<RDSDataClient>
+	readonly #createClient: ClientFactory
 	readonly #connection: RDSDataAPIPostgresDialectConfig['connection']
 	readonly #typeMapper: RDSDataAPITypeMapper
-	#client: RDSDataClient | undefined
+	readonly #executeStatementCommand: CreateExecuteStatementCommand
+	#client: DataAPIClient | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#createClient = config.createClient
 		this.#connection = config.connection
 		this.#typeMapper = config.typeMapper
+		this.#executeStatementCommand = config.executeStatementCommand
 	}
 
 	async init(_options?: AbortableOperationOptions): Promise<void> {
@@ -37,6 +44,7 @@ export class RDSDataAPIDriver implements Driver {
 			client: this.#client,
 			connection: this.#connection,
 			typeMapper: this.#typeMapper,
+			executeStatementCommand: this.#executeStatementCommand,
 		})
 	}
 

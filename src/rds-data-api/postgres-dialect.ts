@@ -1,4 +1,3 @@
-import { RDSDataClient } from '@aws-sdk/client-rds-data'
 import {
 	type DatabaseIntrospector,
 	type Dialect,
@@ -9,21 +8,23 @@ import {
 	type QueryCompiler,
 } from 'kysely'
 import { RDSDataAPIDialectAdapter } from './dialect-adapter'
-import { RDSDataAPIDriver } from './driver'
+import { type ClientFactory, RDSDataAPIDriver } from './driver'
 import { RDSDataAPIPostgresQueryCompiler } from './postgres-query-compiler'
+import type { CreateExecuteStatementCommand } from './rds-data-api-types'
 import {
 	DefaultRDSDataAPITypeMapper,
 	type RDSDataAPITypeMapper,
 } from './type-mapper'
 
 export type RDSDataAPIPostgresDialectConfig = {
-	createClient?: () => RDSDataClient | Promise<RDSDataClient>
+	createClient: ClientFactory
 	typeMapper?: RDSDataAPITypeMapper
 	connection: {
 		resourceArn: string
 		secretArn: string
 		database: string
 	}
+	executeStatementCommand: CreateExecuteStatementCommand
 }
 
 export class RDSDataAPIPostgresDialect implements Dialect {
@@ -31,9 +32,10 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 
 	constructor(config: RDSDataAPIPostgresDialectConfig) {
 		this.#config = {
-			createClient: config.createClient ?? (() => new RDSDataClient()),
+			createClient: config.createClient,
 			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
 			connection: config.connection,
+			executeStatementCommand: config.executeStatementCommand,
 		}
 	}
 	createDriver(): Driver {

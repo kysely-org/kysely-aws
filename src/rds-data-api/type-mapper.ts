@@ -1,16 +1,19 @@
 import type {
-	ColumnMetadata,
-	Field,
-	SqlParameter,
-} from '@aws-sdk/client-rds-data'
+	DataAPIColumnMetadata,
+	DataAPIField,
+	DataAPISqlParameter,
+} from './rds-data-api-types'
 
 export type RDSDataAPITypeMapper = {
-	mapQueryParameter(value: unknown): SqlParameter
-	mapResponseField(field: Field, columnMetadata?: ColumnMetadata): unknown
+	mapQueryParameter(value: unknown): DataAPISqlParameter
+	mapResponseField(
+		field: DataAPIField,
+		columnMetadata?: DataAPIColumnMetadata,
+	): unknown
 }
 
 export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
-	mapQueryParameter = (value: unknown): SqlParameter => {
+	mapQueryParameter = (value: unknown): DataAPISqlParameter => {
 		if (typeof value === 'string') {
 			return { value: { stringValue: value } }
 		}
@@ -27,7 +30,10 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 		throw new Error(`Unsupported parameter type ${typeof value}`)
 	}
 
-	mapResponseField = (field: Field, columnMetadata: ColumnMetadata) => {
+	mapResponseField = (
+		field: DataAPIField,
+		columnMetadata: DataAPIColumnMetadata,
+	) => {
 		if (field.stringValue !== undefined) {
 			return field.stringValue
 		}

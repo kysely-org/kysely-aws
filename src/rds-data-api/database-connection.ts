@@ -1,14 +1,13 @@
-import {
-	type ColumnMetadata,
-	ExecuteStatementCommand,
-	type RDSDataClient,
-} from '@aws-sdk/client-rds-data'
 import type {
 	AbortableOperationOptions,
 	CompiledQuery,
 	DatabaseConnection,
 	QueryResult,
 } from 'kysely'
+import type {
+	CreateExecuteStatementCommand,
+	DataAPIClient,
+} from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export type RDSDataAPIConnectionDetails = {
@@ -16,24 +15,22 @@ export type RDSDataAPIConnectionDetails = {
 	secretArn: string
 	database: string
 }
-
 export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
-	readonly #client: RDSDataClient
+	readonly #client: DataAPIClient
 	readonly #connection: RDSDataAPIConnectionDetails
 	readonly #typeMapper: RDSDataAPITypeMapper
+	readonly #executeStatementCommand: CreateExecuteStatementCommand
 
-	constructor({
-		client,
-		connection,
-		typeMapper,
-	}: {
-		client: RDSDataClient
+	constructor(props: {
+		client: DataAPIClient
 		connection: RDSDataAPIConnectionDetails
 		typeMapper: RDSDataAPITypeMapper
+		executeStatementCommand: CreateExecuteStatementCommand
 	}) {
-		this.#client = client
-		this.#connection = connection
-		this.#typeMapper = typeMapper
+		this.#client = props.client
+		this.#connection = props.connection
+		this.#typeMapper = props.typeMapper
+		this.#executeStatementCommand = props.executeStatementCommand
 	}
 
 	async executeQuery<R>(
@@ -46,7 +43,7 @@ export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		}))
 
 		const response = await this.#client.send(
-			new ExecuteStatementCommand({
+			this.#executeStatementCommand({
 				resourceArn: this.#connection.resourceArn,
 				secretArn: this.#connection.secretArn,
 				database: this.#connection.database,
@@ -78,7 +75,7 @@ export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 				// or returning variable amounts of columns per row).
 				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
 					field,
-					response.columnMetadata?.[i] as ColumnMetadata,
+					response.columnMetadata?.[i],
 				)
 			}
 
