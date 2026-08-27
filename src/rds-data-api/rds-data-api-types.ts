@@ -13,9 +13,6 @@ export type CreateExecuteStatementCommand = (
 
 export type DataAPIExecuteStatementCommand = object
 export type DataAPIExecuteStatementInput = {
-	resourceArn: string
-	secretArn: string
-	database: string
 	sql: string
 	parameters: DataAPISqlParameter[]
 	includeResultMetadata: true

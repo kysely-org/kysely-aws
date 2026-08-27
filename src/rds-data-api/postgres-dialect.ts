@@ -19,11 +19,6 @@ import {
 export type RDSDataAPIPostgresDialectConfig = {
 	createClient: ClientFactory
 	typeMapper?: RDSDataAPITypeMapper
-	connection: {
-		resourceArn: string
-		secretArn: string
-		database: string
-	}
 	executeStatementCommand: CreateExecuteStatementCommand
 }
 
@@ -34,7 +29,6 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 		this.#config = {
 			createClient: config.createClient,
 			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
-			connection: config.connection,
 			executeStatementCommand: config.executeStatementCommand,
 		}
 	}

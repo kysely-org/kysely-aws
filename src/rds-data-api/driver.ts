@@ -17,14 +17,12 @@ export type ClientFactory = () => DataAPIClient | Promise<DataAPIClient>
 
 export class RDSDataAPIDriver implements Driver {
 	readonly #createClient: ClientFactory
-	readonly #connection: RDSDataAPIPostgresDialectConfig['connection']
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
 	#client: DataAPIClient | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#createClient = config.createClient
-		this.#connection = config.connection
 		this.#typeMapper = config.typeMapper
 		this.#executeStatementCommand = config.executeStatementCommand
 	}
@@ -42,7 +40,6 @@ export class RDSDataAPIDriver implements Driver {
 
 		return new RDSDataAPIDatabaseConnection({
 			client: this.#client,
-			connection: this.#connection,
 			typeMapper: this.#typeMapper,
 			executeStatementCommand: this.#executeStatementCommand,
 		})

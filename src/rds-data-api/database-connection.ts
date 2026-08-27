@@ -10,25 +10,17 @@ import type {
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
-export type RDSDataAPIConnectionDetails = {
-	resourceArn: string
-	secretArn: string
-	database: string
-}
 export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	readonly #client: DataAPIClient
-	readonly #connection: RDSDataAPIConnectionDetails
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
 
 	constructor(props: {
 		client: DataAPIClient
-		connection: RDSDataAPIConnectionDetails
 		typeMapper: RDSDataAPITypeMapper
 		executeStatementCommand: CreateExecuteStatementCommand
 	}) {
 		this.#client = props.client
-		this.#connection = props.connection
 		this.#typeMapper = props.typeMapper
 		this.#executeStatementCommand = props.executeStatementCommand
 	}
@@ -44,9 +36,6 @@ export class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 
 		const response = await this.#client.send(
 			this.#executeStatementCommand({
-				resourceArn: this.#connection.resourceArn,
-				secretArn: this.#connection.secretArn,
-				database: this.#connection.database,
 				sql: compiledQuery.sql,
 				parameters,
 				includeResultMetadata: true,
