@@ -7,27 +7,18 @@ import {
 	PostgresIntrospector,
 	type QueryCompiler,
 } from 'kysely'
+import type { RDSDataAPIPostgresDialectConfig } from './config'
 import { RDSDataAPIDialectAdapter } from './dialect-adapter'
-import { type ClientFactory, RDSDataAPIDriver } from './driver'
+import { RDSDataAPIDriver } from './driver'
 import { RDSDataAPIPostgresQueryCompiler } from './postgres-query-compiler'
-import type { CreateExecuteStatementCommand } from './rds-data-api-types'
-import {
-	DefaultRDSDataAPITypeMapper,
-	type RDSDataAPITypeMapper,
-} from './type-mapper'
-
-export type RDSDataAPIPostgresDialectConfig = {
-	createClient: ClientFactory
-	typeMapper?: RDSDataAPITypeMapper
-	executeStatementCommand: CreateExecuteStatementCommand
-}
+import { DefaultRDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIPostgresDialect implements Dialect {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 
 	constructor(config: RDSDataAPIPostgresDialectConfig) {
 		this.#config = {
-			createClient: config.createClient,
+			client: config.client,
 			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
 			executeStatementCommand: config.executeStatementCommand,
 		}

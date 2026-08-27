@@ -5,30 +5,31 @@ import type {
 	QueryCompiler,
 	TransactionSettings,
 } from 'kysely'
+import type { ClientFactory, RDSDataAPIPostgresDialectConfig } from './config'
 import { RDSDataAPIDatabaseConnection } from './database-connection'
-import type { RDSDataAPIPostgresDialectConfig } from './postgres-dialect'
 import type {
 	CreateExecuteStatementCommand,
 	DataAPIClient,
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
-export type ClientFactory = () => DataAPIClient | Promise<DataAPIClient>
-
 export class RDSDataAPIDriver implements Driver {
-	readonly #createClient: ClientFactory
+	readonly #configuredClient: DataAPIClient | ClientFactory
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
 	#client: DataAPIClient | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
-		this.#createClient = config.createClient
+		this.#configuredClient = config.client
 		this.#typeMapper = config.typeMapper
 		this.#executeStatementCommand = config.executeStatementCommand
 	}
 
-	async init(_options?: AbortableOperationOptions): Promise<void> {
-		this.#client = await this.#createClient()
+	async init(options?: AbortableOperationOptions): Promise<void> {
+		this.#client =
+			typeof this.#configuredClient === 'function'
+				? await this.#configuredClient(options)
+				: this.#configuredClient
 	}
 
 	async acquireConnection(

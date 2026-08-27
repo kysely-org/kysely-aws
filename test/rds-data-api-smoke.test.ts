@@ -43,7 +43,7 @@ const connection = {
 }
 const db = new Kysely<Database>({
 	dialect: new RDSDataAPIPostgresDialect({
-		createClient: () => client,
+		client: () => client,
 		executeStatementCommand: (input) =>
 			new ExecuteStatementCommand({
 				...connection,
