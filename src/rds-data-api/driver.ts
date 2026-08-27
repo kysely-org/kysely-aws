@@ -18,6 +18,7 @@ export class RDSDataAPIDriver implements Driver {
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
 	#client: DataAPIClient | undefined
+	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#configuredClient = config.client
@@ -39,11 +40,11 @@ export class RDSDataAPIDriver implements Driver {
 			throw new Error('Driver not initialised')
 		}
 
-		return new RDSDataAPIDatabaseConnection({
+		return (this.#connection ??= new RDSDataAPIDatabaseConnection({
 			client: this.#client,
 			typeMapper: this.#typeMapper,
 			executeStatementCommand: this.#executeStatementCommand,
-		})
+		}))
 	}
 
 	beginTransaction(
