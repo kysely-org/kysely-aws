@@ -28,7 +28,7 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 	}
 
 	createQueryCompiler(): QueryCompiler {
-		return new RDSDataAPIPostgresQueryCompiler()
+		return new RDSDataAPIPostgresQueryCompiler(this.#config.typeMapper)
 	}
 
 	createAdapter(): DialectAdapter {

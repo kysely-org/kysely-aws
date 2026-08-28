@@ -13,6 +13,7 @@ import type {
 	DataAPIClient,
 	DataAPIColumnMetadata,
 	DataAPIExecuteResult,
+	DataAPISqlParameter,
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
@@ -125,15 +126,11 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		compiledQuery: CompiledQuery,
 		_options?: AbortableOperationOptions,
 	): Promise<QueryResult<R>> {
-		const parameters = compiledQuery.parameters.map((value, index) => ({
-			name: `${index + 1}`,
-			...this.#typeMapper.mapQueryParameter(value),
-		}))
-
 		const response = await this.#client.send(
 			this.#executeStatementCommand({
 				sql: compiledQuery.sql,
-				parameters,
+				// compiledQuery.parameters are a `readonly unknown[]` - but we control them and can spread/coerce safely
+				parameters: [...compiledQuery.parameters] as DataAPISqlParameter[],
 				includeResultMetadata: true,
 				resultSetOptions,
 			}),
