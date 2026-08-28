@@ -3,25 +3,23 @@ import type {
 	CompiledQuery,
 	DatabaseConnection,
 	Driver,
-	QueryCompiler,
 	QueryResult,
-	TransactionSettings,
 } from 'kysely'
 import type { ClientFactory, RDSDataAPIPostgresDialectConfig } from './config'
 import type {
 	CreateExecuteStatementCommand,
-	DataAPIClient,
-	DataAPIColumnMetadata,
-	DataAPIExecuteResult,
-	DataAPISqlParameter,
+	RDSDataAPIClient,
+	RDSDataAPIColumnMetadata,
+	RDSDataAPIExecuteResult,
+	RDSDataAPISqlParameter,
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIDriver implements Driver {
-	readonly #configuredClient: DataAPIClient | ClientFactory
+	readonly #configuredClient: RDSDataAPIClient | ClientFactory
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
-	#client: DataAPIClient | undefined
+	#client: RDSDataAPIClient | undefined
 	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
@@ -37,9 +35,7 @@ export class RDSDataAPIDriver implements Driver {
 				: this.#configuredClient
 	}
 
-	async acquireConnection(
-		_options?: AbortableOperationOptions,
-	): Promise<DatabaseConnection> {
+	async acquireConnection(): Promise<DatabaseConnection> {
 		if (!this.#client) {
 			throw new Error('Driver not initialised')
 		}
@@ -51,53 +47,35 @@ export class RDSDataAPIDriver implements Driver {
 		}))
 	}
 
-	beginTransaction(
-		_connection: DatabaseConnection,
-		_settings: TransactionSettings,
-	): Promise<void> {
+	beginTransaction(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	commitTransaction(_connection: DatabaseConnection): Promise<void> {
+	commitTransaction(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	rollbackTransaction(_connection: DatabaseConnection): Promise<void> {
+	rollbackTransaction(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	savepoint?(
-		_connection: DatabaseConnection,
-		_savepointName: string,
-		_compileQuery: QueryCompiler['compileQuery'],
-	): Promise<void> {
+	savepoint?(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	rollbackToSavepoint?(
-		_connection: DatabaseConnection,
-		_savepointName: string,
-		_compileQuery: QueryCompiler['compileQuery'],
-	): Promise<void> {
+	rollbackToSavepoint?(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	releaseSavepoint?(
-		_connection: DatabaseConnection,
-		_savepointName: string,
-		_compileQuery: QueryCompiler['compileQuery'],
-	): Promise<void> {
+	releaseSavepoint?(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	async releaseConnection(
-		_connection: DatabaseConnection,
-		_options?: AbortableOperationOptions,
-	): Promise<void> {
+	async releaseConnection(): Promise<void> {
 		// noop - not a persistent connection
 	}
 
-	async destroy(_options?: AbortableOperationOptions): Promise<void> {
+	async destroy(): Promise<void> {
 		this.#client?.destroy()
 	}
 }
@@ -107,30 +85,29 @@ const resultSetOptions = {
 	longReturnType: 'LONG' as const,
 }
 
+type DatabaseConnectionConfig = {
+	client: RDSDataAPIClient
+	typeMapper: RDSDataAPITypeMapper
+	executeStatementCommand: CreateExecuteStatementCommand
+}
+
 class RDSDataAPIDatabaseConnection implements DatabaseConnection {
-	readonly #client: DataAPIClient
+	readonly #client: RDSDataAPIClient
 	readonly #typeMapper: RDSDataAPITypeMapper
 	readonly #executeStatementCommand: CreateExecuteStatementCommand
 
-	constructor(props: {
-		client: DataAPIClient
-		typeMapper: RDSDataAPITypeMapper
-		executeStatementCommand: CreateExecuteStatementCommand
-	}) {
-		this.#client = props.client
-		this.#typeMapper = props.typeMapper
-		this.#executeStatementCommand = props.executeStatementCommand
+	constructor(config: DatabaseConnectionConfig) {
+		this.#client = config.client
+		this.#typeMapper = config.typeMapper
+		this.#executeStatementCommand = config.executeStatementCommand
 	}
 
-	async executeQuery<R>(
-		compiledQuery: CompiledQuery,
-		_options?: AbortableOperationOptions,
-	): Promise<QueryResult<R>> {
+	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
 		const response = await this.#client.send(
 			this.#executeStatementCommand({
 				sql: compiledQuery.sql,
 				// compiledQuery.parameters are a `readonly unknown[]` - but we control them and can spread/coerce safely
-				parameters: [...compiledQuery.parameters] as DataAPISqlParameter[],
+				parameters: [...compiledQuery.parameters] as RDSDataAPISqlParameter[],
 				includeResultMetadata: true,
 				resultSetOptions,
 			}),
@@ -138,21 +115,18 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 
 		return {
 			rows: this.#getRows<R>(response),
-			...(response.numberOfRecordsUpdated !== undefined
-				? { numAffectedRows: BigInt(response.numberOfRecordsUpdated) }
-				: {}),
+			numAffectedRows:
+				response.numberOfRecordsUpdated !== null
+					? BigInt(response.numberOfRecordsUpdated)
+					: undefined,
 		}
 	}
 
-	streamQuery<R>(
-		_compiledQuery: CompiledQuery,
-		_chunkSize: number,
-		_options?: AbortableOperationOptions,
-	): AsyncIterableIterator<QueryResult<R>> {
+	streamQuery<R>(): AsyncIterableIterator<QueryResult<R>> {
 		throw new Error('Method not implemented.')
 	}
 
-	#getColumnNames(columnMetadata: DataAPIColumnMetadata[]) {
+	#getColumnNames(columnMetadata: RDSDataAPIColumnMetadata[]) {
 		return columnMetadata.map((metadata, i) => {
 			if (!metadata?.name) {
 				throw new Error(`Missing column metadata name for column ${i}`)
@@ -161,7 +135,7 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		})
 	}
 
-	#getRows<R>(executeResult: DataAPIExecuteResult) {
+	#getRows<R>(executeResult: RDSDataAPIExecuteResult) {
 		const columnNames = this.#getColumnNames(executeResult.columnMetadata ?? [])
 		const records = executeResult.records
 		const rows: R[] = []

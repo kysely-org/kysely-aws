@@ -1,23 +1,32 @@
-import type { DialectAdapter, Kysely, MigrationLockOptions } from 'kysely'
+import { DialectAdapterBase } from 'kysely'
 
-export class RDSDataAPIDialectAdapter implements DialectAdapter {
-	supportsCreateIfNotExists: boolean = true
-	supportsMultipleConnections: boolean = true
-	supportsTransactionalDdl: boolean = false // TODO - true when transactions supported
-	supportsReturning: boolean = true
-	supportsOutput: boolean = false
-
-	acquireMigrationLock(
-		_db: Kysely<unknown>,
-		_options: MigrationLockOptions,
-	): Promise<void> {
-		throw new Error('Method not implemented.')
+export class RDSDataAPIDialectAdapter extends DialectAdapterBase {
+	override get supportsCreateIfNotExists(): boolean {
+		return true
 	}
 
-	releaseMigrationLock(
-		_db: Kysely<unknown>,
-		_options: MigrationLockOptions,
-	): Promise<void> {
-		throw new Error('Method not implemented.')
+	override get supportsMultipleConnections(): boolean {
+		return true
+	}
+
+	override get supportsTransactionalDdl(): boolean {
+		// TODO - true when transactions supported
+		return false
+	}
+
+	override get supportsReturning(): boolean {
+		return true
+	}
+
+	override get supportsOutput(): boolean {
+		return false
+	}
+
+	override acquireMigrationLock(): Promise<void> {
+		throw new Error('Migrations not supported.')
+	}
+
+	override releaseMigrationLock(): Promise<void> {
+		throw new Error('Migrations not supported.')
 	}
 }

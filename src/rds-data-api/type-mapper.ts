@@ -1,19 +1,19 @@
 import type {
-	DataAPIColumnMetadata,
-	DataAPIField,
-	DataAPISqlParameter,
+	RDSDataAPIColumnMetadata,
+	RDSDataAPIField,
+	RDSDataAPISqlParameter,
 } from './rds-data-api-types'
 
 export type RDSDataAPITypeMapper = {
-	mapQueryParameter(value: unknown): DataAPISqlParameter
+	mapQueryParameter(value: unknown): RDSDataAPISqlParameter
 	mapResponseField(
-		field: DataAPIField,
-		columnMetadata?: DataAPIColumnMetadata,
+		field: RDSDataAPIField,
+		columnMetadata?: RDSDataAPIColumnMetadata,
 	): unknown
 }
 
 export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
-	mapQueryParameter = (value: unknown): DataAPISqlParameter => {
+	mapQueryParameter = (value: unknown): RDSDataAPISqlParameter => {
 		if (typeof value === 'string') {
 			return { value: { stringValue: value } }
 		}
@@ -31,8 +31,8 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 	}
 
 	mapResponseField = (
-		field: DataAPIField,
-		columnMetadata: DataAPIColumnMetadata,
+		field: RDSDataAPIField,
+		columnMetadata: RDSDataAPIColumnMetadata,
 	) => {
 		if (field.stringValue !== undefined) {
 			return field.stringValue

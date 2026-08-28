@@ -23,6 +23,7 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 			executeStatementCommand: config.executeStatementCommand,
 		}
 	}
+
 	createDriver(): Driver {
 		return new RDSDataAPIDriver(this.#config)
 	}

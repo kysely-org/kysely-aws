@@ -1,20 +1,25 @@
-export type DataAPIExecuteResult = {
-	records?: DataAPIField[][]
-	columnMetadata?: DataAPIColumnMetadata[]
+export type RDSDataAPIExecuteResult = {
+	records?: RDSDataAPIField[][]
+	columnMetadata?: RDSDataAPIColumnMetadata[]
 	numberOfRecordsUpdated: number
 }
-export type DataAPIClient = {
-	send(command: DataAPIExecuteStatementCommand): Promise<DataAPIExecuteResult>
+
+export type RDSDataAPIClient = {
+	send(
+		command: RDSDataAPIExecuteStatementCommand,
+	): Promise<RDSDataAPIExecuteResult>
 	destroy(): void
 }
-export type CreateExecuteStatementCommand = (
-	input: DataAPIExecuteStatementInput,
-) => DataAPIExecuteStatementCommand
 
-export type DataAPIExecuteStatementCommand = object
-export type DataAPIExecuteStatementInput = {
+export type CreateExecuteStatementCommand = (
+	input: RDSDataAPIExecuteStatementInput,
+) => RDSDataAPIExecuteStatementCommand
+
+export type RDSDataAPIExecuteStatementCommand = object
+
+export type RDSDataAPIExecuteStatementInput = {
 	sql: string
-	parameters: DataAPISqlParameter[]
+	parameters: RDSDataAPISqlParameter[]
 	includeResultMetadata: true
 	resultSetOptions: {
 		decimalReturnType: 'STRING'
@@ -22,16 +27,16 @@ export type DataAPIExecuteStatementInput = {
 	}
 }
 
-export type DataAPISqlParameter = {
+export type RDSDataAPISqlParameter = {
 	value?: { stringValue: string } | { longValue: number } | { isNull: true }
 }
 
-export type DataAPIField = {
+export type RDSDataAPIField = {
 	isNull?: boolean
 	longValue?: number
 	stringValue?: string
 }
 
-export type DataAPIColumnMetadata = {
+export type RDSDataAPIColumnMetadata = {
 	name?: string | undefined
 }

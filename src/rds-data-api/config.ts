@@ -1,15 +1,15 @@
 import type { AbortableOperationOptions } from 'kysely'
 import type {
 	CreateExecuteStatementCommand,
-	DataAPIClient,
+	RDSDataAPIClient,
 } from './rds-data-api-types'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export type ClientFactory = (
 	options?: AbortableOperationOptions,
-) => DataAPIClient | Promise<DataAPIClient>
+) => RDSDataAPIClient | Promise<RDSDataAPIClient>
 export type RDSDataAPIPostgresDialectConfig = {
-	client: DataAPIClient | ClientFactory
+	client: RDSDataAPIClient | ClientFactory
 	typeMapper?: RDSDataAPITypeMapper
 	executeStatementCommand: CreateExecuteStatementCommand
 }
