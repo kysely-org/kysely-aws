@@ -17,6 +17,7 @@ ignoreWorkspaceRootCheck: true
 
 minimumReleaseAgeExclude:
   - postcss@8.5.18
+  - nanoid@3.3.18
 
 # fail and don't fallback to "too new" version of packages when none of their other
 # versions match `minimumReleaseAge` range (default is 1 day).
