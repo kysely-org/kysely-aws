@@ -19,7 +19,7 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 		}
 
 		if (typeof value === 'number') {
-			// TODO - test and support double
+			// TODO - test and support double, NaN, Infinity
 			return { value: { longValue: value } }
 		}
 
@@ -27,6 +27,7 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 			return { value: { isNull: true } }
 		}
 
+		// TODO - Extend mapQueryParameter to handle more types
 		throw new Error(`Unsupported parameter type ${typeof value}`)
 	}
 
@@ -46,6 +47,7 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 			return null
 		}
 
+		// TODO - extend mapResponseField to handle more types
 		throw new Error(`Unsupported field type for field ${columnMetadata.name}`)
 	}
 }
