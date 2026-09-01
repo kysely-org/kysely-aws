@@ -8,6 +8,7 @@ import type { RDSDataAPITypeMapper } from './type-mapper'
 export type ClientFactory = (
 	options?: AbortableOperationOptions,
 ) => RDSDataAPIClient | Promise<RDSDataAPIClient>
+
 export type RDSDataAPIPostgresDialectConfig = {
 	client: RDSDataAPIClient | ClientFactory
 	typeMapper?: RDSDataAPITypeMapper

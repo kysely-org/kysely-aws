@@ -23,7 +23,7 @@ export class DefaultRDSDataAPITypeMapper implements RDSDataAPITypeMapper {
 			return { value: { longValue: value } }
 		}
 
-		if (value === undefined || value === null) {
+		if (value == null) {
 			return { value: { isNull: true } }
 		}
 

@@ -5,7 +5,7 @@ import type {
 	Driver,
 	QueryResult,
 } from 'kysely'
-import type { ClientFactory, RDSDataAPIPostgresDialectConfig } from './config'
+import type { RDSDataAPIPostgresDialectConfig } from './config'
 import type {
 	CreateExecuteStatementCommand,
 	RDSDataAPIClient,
@@ -16,23 +16,19 @@ import type {
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIDriver implements Driver {
-	readonly #configuredClient: RDSDataAPIClient | ClientFactory
-	readonly #typeMapper: RDSDataAPITypeMapper
-	readonly #executeStatementCommand: CreateExecuteStatementCommand
+	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 	#client: RDSDataAPIClient | undefined
 	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
-		this.#configuredClient = config.client
-		this.#typeMapper = config.typeMapper
-		this.#executeStatementCommand = config.executeStatementCommand
+		this.#config = config
 	}
 
 	async init(options?: AbortableOperationOptions): Promise<void> {
 		this.#client =
-			typeof this.#configuredClient === 'function'
-				? await this.#configuredClient(options)
-				: this.#configuredClient
+			typeof this.#config.client === 'function'
+				? await this.#config.client(options)
+				: this.#config.client
 	}
 
 	async acquireConnection(): Promise<DatabaseConnection> {
@@ -42,8 +38,8 @@ export class RDSDataAPIDriver implements Driver {
 
 		return (this.#connection ??= new RDSDataAPIDatabaseConnection({
 			client: this.#client,
-			typeMapper: this.#typeMapper,
-			executeStatementCommand: this.#executeStatementCommand,
+			typeMapper: this.#config.typeMapper,
+			executeStatementCommand: this.#config.executeStatementCommand,
 		}))
 	}
 
@@ -59,15 +55,15 @@ export class RDSDataAPIDriver implements Driver {
 		throw new Error('Method not implemented.')
 	}
 
-	savepoint?(): Promise<void> {
+	savepoint(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	rollbackToSavepoint?(): Promise<void> {
+	rollbackToSavepoint(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
-	releaseSavepoint?(): Promise<void> {
+	releaseSavepoint(): Promise<void> {
 		throw new Error('Method not implemented.')
 	}
 
@@ -81,9 +77,9 @@ export class RDSDataAPIDriver implements Driver {
 }
 
 const resultSetOptions = {
-	decimalReturnType: 'STRING' as const,
-	longReturnType: 'LONG' as const,
-}
+	decimalReturnType: 'STRING',
+	longReturnType: 'LONG',
+} as const
 
 type DatabaseConnectionConfig = {
 	client: RDSDataAPIClient
@@ -135,11 +131,15 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 		})
 	}
 
-	#getRows<R>(executeResult: RDSDataAPIExecuteResult) {
+	#getRows<R>(executeResult: RDSDataAPIExecuteResult): R[] {
 		const columnNames = this.#getColumnNames(executeResult.columnMetadata ?? [])
 		const records = executeResult.records
+		if (!records || records.length === 0) {
+			return []
+		}
+
 		const rows: R[] = []
-		for (const record of records ?? []) {
+		for (const record of records) {
 			const row: Record<string, unknown> = {}
 			for (const [i, field] of record.entries()) {
 				// Intentionally "dangerous" coercions here to avoid re-testing the
