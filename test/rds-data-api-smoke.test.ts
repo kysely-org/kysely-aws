@@ -1,4 +1,5 @@
 import {
+	DatabaseErrorException,
 	ExecuteStatementCommand,
 	RDSDataClient,
 } from '@aws-sdk/client-rds-data'
@@ -636,6 +637,29 @@ describe('Smoke tests', () => {
 
 			expect(moreRows).toHaveLength(0)
 			expect(row?.first_name).toBe(person.first_name)
+		})
+	})
+
+	describe('edge cases', () => {
+		// We handle this as a theoretical edge case in the dialect, but this test proves true behaviour
+		it('Should error with column aliased as empty string', async () => {
+			const person = generatePerson()
+			const { id } = await seedPerson(person)
+
+			let error: DatabaseErrorException | undefined
+			try {
+				await db
+					.selectFrom('person')
+					.select((eb) => eb.ref('id').as(''))
+					.where('id', '=', id)
+					.execute()
+			} catch (e) {
+				if (e instanceof DatabaseErrorException) {
+					error = e as DatabaseErrorException
+				}
+			}
+
+			expect(error?.message).toContain('SQLState: 42601')
 		})
 	})
 })

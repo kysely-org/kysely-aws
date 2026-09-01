@@ -8,8 +8,8 @@ import {
 	type QueryCompiler,
 } from 'kysely'
 import type { RDSDataAPIPostgresDialectConfig } from './config'
-import { RDSDataAPIPostgresDialectAdapter } from './postgres-dialect-adapter'
 import { RDSDataAPIDriver } from './driver'
+import { RDSDataAPIPostgresDialectAdapter } from './postgres-dialect-adapter'
 import { RDSDataAPIPostgresQueryCompiler } from './postgres-query-compiler'
 import { DefaultRDSDataAPITypeMapper } from './type-mapper'
 

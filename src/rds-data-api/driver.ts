@@ -128,7 +128,7 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 
 	#getColumnNames(columnMetadata: RDSDataAPIColumnMetadata[]) {
 		return columnMetadata.map((metadata, i) => {
-			if (!metadata?.name) {
+			if (metadata?.name == null) {
 				throw new Error(`Missing column metadata name for column ${i}`)
 			}
 			return metadata.name
