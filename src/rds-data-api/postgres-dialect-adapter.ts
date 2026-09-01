@@ -1,6 +1,6 @@
 import { DialectAdapterBase } from 'kysely'
 
-export class RDSDataAPIDialectAdapter extends DialectAdapterBase {
+export class RDSDataAPIPostgresDialectAdapter extends DialectAdapterBase {
 	override get supportsCreateIfNotExists(): boolean {
 		return true
 	}
