@@ -2,6 +2,7 @@ export type RDSDataAPIExecuteResult = {
 	records?: RDSDataAPIField[][]
 	columnMetadata?: RDSDataAPIColumnMetadata[]
 	numberOfRecordsUpdated: number
+	transactionId?: string
 }
 
 export type RDSDataAPIClient = {
@@ -25,7 +26,29 @@ export type RDSDataAPIExecuteStatementInput = {
 		decimalReturnType: 'STRING'
 		longReturnType: 'LONG'
 	}
+	transactionId?: string
 }
+
+export type CreateBeginTransactionCommand =
+	() => RDSDataAPIBeginTransactionCommand
+
+export type RDSDataAPIBeginTransactionCommand = object
+
+export type CreateCommitTransactionCommand = (
+	input: RDSDataAPICommitTransactionInput,
+) => RDSDataAPICommitTransactionCommand
+
+export type RDSDataAPICommitTransactionCommand = object
+
+export type RDSDataAPICommitTransactionInput = { transactionId: string }
+
+export type CreateRollbackTransactionCommand = (
+	input: RDSDataAPIRollbackTransactionInput,
+) => RDSDataAPIRollbackTransactionCommand
+
+export type RDSDataAPIRollbackTransactionCommand = object
+
+export type RDSDataAPIRollbackTransactionInput = { transactionId: string }
 
 export type RDSDataAPISqlParameter = {
 	value?: { stringValue: string } | { longValue: number } | { isNull: true }

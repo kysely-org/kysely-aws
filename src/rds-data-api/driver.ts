@@ -7,7 +7,10 @@ import type {
 } from 'kysely'
 import type { RDSDataAPIPostgresDialectConfig } from './config'
 import type {
+	CreateBeginTransactionCommand,
+	CreateCommitTransactionCommand,
 	CreateExecuteStatementCommand,
+	CreateRollbackTransactionCommand,
 	RDSDataAPIClient,
 	RDSDataAPIColumnMetadata,
 	RDSDataAPIExecuteResult,
@@ -18,7 +21,6 @@ import type { RDSDataAPITypeMapper } from './type-mapper'
 export class RDSDataAPIDriver implements Driver {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 	#client: RDSDataAPIClient | undefined
-	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#config = config
@@ -36,23 +38,28 @@ export class RDSDataAPIDriver implements Driver {
 			throw new Error('Driver not initialised')
 		}
 
-		return (this.#connection ??= new RDSDataAPIDatabaseConnection({
+		return new RDSDataAPIDatabaseConnection({
+			...this.#config,
 			client: this.#client,
-			typeMapper: this.#config.typeMapper,
-			executeStatementCommand: this.#config.executeStatementCommand,
-		}))
+		})
 	}
 
-	beginTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async beginTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+	): Promise<void> {
+		await connection.beginTransaction()
 	}
 
-	commitTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async commitTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+	): Promise<void> {
+		await connection.commitTransaction()
 	}
 
-	rollbackTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async rollbackTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+	): Promise<void> {
+		await connection.rollbackTransaction()
 	}
 
 	savepoint(): Promise<void> {
@@ -85,27 +92,28 @@ type DatabaseConnectionConfig = {
 	client: RDSDataAPIClient
 	typeMapper: RDSDataAPITypeMapper
 	executeStatementCommand: CreateExecuteStatementCommand
+	beginTransactionCommand: CreateBeginTransactionCommand
+	commitTransactionCommand: CreateCommitTransactionCommand
+	rollbackTransactionCommand: CreateRollbackTransactionCommand
 }
 
 class RDSDataAPIDatabaseConnection implements DatabaseConnection {
-	readonly #client: RDSDataAPIClient
-	readonly #typeMapper: RDSDataAPITypeMapper
-	readonly #executeStatementCommand: CreateExecuteStatementCommand
+	readonly #config: DatabaseConnectionConfig
+	#transactionId?: string
 
 	constructor(config: DatabaseConnectionConfig) {
-		this.#client = config.client
-		this.#typeMapper = config.typeMapper
-		this.#executeStatementCommand = config.executeStatementCommand
+		this.#config = config
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
-		const response = await this.#client.send(
-			this.#executeStatementCommand({
+		const response = await this.#config.client.send(
+			this.#config.executeStatementCommand({
 				sql: compiledQuery.sql,
 				// compiledQuery.parameters are a `readonly unknown[]` - but we control them and can spread/coerce safely
 				parameters: [...compiledQuery.parameters] as RDSDataAPISqlParameter[],
 				includeResultMetadata: true,
 				resultSetOptions,
+				transactionId: this.#transactionId,
 			}),
 		)
 
@@ -133,8 +141,8 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 
 	#getRows<R>(executeResult: RDSDataAPIExecuteResult): R[] {
 		const columnNames = this.#getColumnNames(executeResult.columnMetadata ?? [])
-		const records = executeResult.records
-		if (!records || records.length === 0) {
+		const { records } = executeResult
+		if (!records?.length || !columnNames.length) {
 			return []
 		}
 
@@ -147,15 +155,55 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 				// is only actually dangerous if the RDS Data api starts to perform some
 				// wildly inconsistent behaviours (not returning one metadata per column
 				// or returning variable amounts of columns per row).
-				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
-					field,
-					executeResult.columnMetadata?.[i],
-				)
+				row[columnNames[i] as string] =
+					this.#config.typeMapper.mapResponseField(
+						field,
+						executeResult.columnMetadata?.[i],
+					)
 			}
 
 			rows.push(row as R)
 		}
 
 		return rows
+	}
+
+	async beginTransaction(): Promise<void> {
+		const response = await this.#config.client.send(
+			this.#config.beginTransactionCommand(),
+		)
+
+		if (!response.transactionId) {
+			throw new Error('BeginTransaction did not return a transactionId')
+		}
+
+		this.#transactionId = response.transactionId
+	}
+
+	async commitTransaction(): Promise<void> {
+		if (!this.#transactionId) {
+			throw new Error('No transaction in progress - missing transactionId')
+		}
+
+		await this.#config.client.send(
+			this.#config.commitTransactionCommand({
+				transactionId: this.#transactionId,
+			}),
+		)
+
+		this.#transactionId = undefined
+	}
+
+	async rollbackTransaction(): Promise<void> {
+		if (!this.#transactionId) {
+			throw new Error('No transaction in progress - missing transactionId')
+		}
+
+		await this.#config.client.send(
+			this.#config.rollbackTransactionCommand({
+				transactionId: this.#transactionId,
+			}),
+		)
+		this.#transactionId = undefined
 	}
 }
