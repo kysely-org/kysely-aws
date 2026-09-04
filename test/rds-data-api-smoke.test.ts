@@ -1,7 +1,10 @@
 import {
+	BeginTransactionCommand,
+	CommitTransactionCommand,
 	DatabaseErrorException,
 	ExecuteStatementCommand,
 	RDSDataClient,
+	RollbackTransactionCommand,
 } from '@aws-sdk/client-rds-data'
 import { faker } from '@faker-js/faker'
 import { type Generated, Kysely, sql } from 'kysely'
@@ -47,6 +50,17 @@ const db = new Kysely<Database>({
 		client: () => client,
 		executeStatementCommand: (input) =>
 			new ExecuteStatementCommand({
+				...connection,
+				...input,
+			}),
+		beginTransactionCommand: () => new BeginTransactionCommand(connection),
+		commitTransactionCommand: (input) =>
+			new CommitTransactionCommand({
+				...connection,
+				...input,
+			}),
+		rollbackTransactionCommand: (input) =>
+			new RollbackTransactionCommand({
 				...connection,
 				...input,
 			}),
@@ -660,6 +674,42 @@ describe('Smoke tests', () => {
 			}
 
 			expect(error?.message).toContain('SQLState: 42601')
+		})
+	})
+
+	describe('transactions', () => {
+		it('Should COMMIT an INSERT', async () => {
+			const person = generatePerson({ first_name: faker.string.uuid() })
+			await db.transaction().execute(async (trx) => {
+				await trx.insertInto('person').values(person).execute()
+			})
+
+			const [row, ...moreRows] = await db
+				.selectFrom('person')
+				.select('id')
+				.where('first_name', '=', person.first_name)
+				.execute()
+
+			expect(moreRows).toHaveLength(0)
+			expect(row?.id).toBeGreaterThan(0)
+		})
+
+		it('Should ROLLBACK an INSERT', async () => {
+			const person = generatePerson({ first_name: faker.string.uuid() })
+			await expect(
+				db.transaction().execute(async (trx) => {
+					await trx.insertInto('person').values(person).execute()
+					throw new Error('rollback')
+				}),
+			).rejects.toThrow('rollback')
+
+			const rows = await db
+				.selectFrom('person')
+				.select('id')
+				.where('first_name', '=', person.first_name)
+				.execute()
+
+			expect(rows).toHaveLength(0)
 		})
 	})
 })

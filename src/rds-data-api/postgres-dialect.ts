@@ -18,9 +18,8 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 
 	constructor(config: RDSDataAPIPostgresDialectConfig) {
 		this.#config = {
-			client: config.client,
+			...config,
 			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
-			executeStatementCommand: config.executeStatementCommand,
 		}
 	}
 
