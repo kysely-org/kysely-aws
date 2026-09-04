@@ -21,7 +21,6 @@ import type { RDSDataAPITypeMapper } from './type-mapper'
 export class RDSDataAPIDriver implements Driver {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 	#client: RDSDataAPIClient | undefined
-	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#config = config
@@ -39,10 +38,10 @@ export class RDSDataAPIDriver implements Driver {
 			throw new Error('Driver not initialised')
 		}
 
-		return (this.#connection ??= new RDSDataAPIDatabaseConnection({
+		return new RDSDataAPIDatabaseConnection({
 			...this.#config,
 			client: this.#client,
-		}))
+		})
 	}
 
 	async beginTransaction(
