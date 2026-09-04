@@ -5,23 +5,35 @@ import {
 	type Driver,
 	type Kysely,
 	PostgresIntrospector,
-	PostgresQueryCompiler,
 	type QueryCompiler,
 } from 'kysely'
-import { RDSDataAPIDialectAdapter } from './dialect-adapter'
+import type { RDSDataAPIPostgresDialectConfig } from './config'
 import { RDSDataAPIDriver } from './driver'
+import { RDSDataAPIPostgresDialectAdapter } from './postgres-dialect-adapter'
+import { RDSDataAPIPostgresQueryCompiler } from './postgres-query-compiler'
+import { DefaultRDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIPostgresDialect implements Dialect {
+	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
+
+	constructor(config: RDSDataAPIPostgresDialectConfig) {
+		this.#config = {
+			client: config.client,
+			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
+			executeStatementCommand: config.executeStatementCommand,
+		}
+	}
+
 	createDriver(): Driver {
-		return new RDSDataAPIDriver()
+		return new RDSDataAPIDriver(this.#config)
 	}
 
 	createQueryCompiler(): QueryCompiler {
-		return new PostgresQueryCompiler()
+		return new RDSDataAPIPostgresQueryCompiler(this.#config.typeMapper)
 	}
 
 	createAdapter(): DialectAdapter {
-		return new RDSDataAPIDialectAdapter()
+		return new RDSDataAPIPostgresDialectAdapter()
 	}
 
 	createIntrospector(db: Kysely<unknown>): DatabaseIntrospector {

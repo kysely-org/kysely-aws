@@ -62,8 +62,9 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "0.18.4",
-    "@aws-sdk/client-rds-data": "^3.0.0",
+    "@aws-sdk/client-rds-data": "^3.1083.0",
     "@biomejs/biome": "2.5.2",
+    "@faker-js/faker": "10.5.0",
     "@tsconfig/node24": "24.0.4",
     "@types/node": "26.1.0",
     "aws-cdk": "2.1129.0",
@@ -74,7 +75,7 @@
     "publint": "0.3.21",
     "std-env": "4.1.0",
     "tsdown": "0.22.3",
-    "tsx": "^4.0.0",
+    "tsx": "^4.23.0",
     "typescript": "6.0.3",
     "vitest": "4.1.9"
   },

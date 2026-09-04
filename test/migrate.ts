@@ -5,19 +5,26 @@ import {
 import type { MigrationConfig } from './env'
 
 const statements = [
-	'DROP TABLE IF EXISTS pet',
-	'DROP TABLE IF EXISTS person',
-	`CREATE TABLE IF NOT EXISTS person (
-		id         BIGSERIAL NOT NULL PRIMARY KEY,
-		first_name TEXT      NOT NULL,
-		last_name  TEXT      NULL,
-		age        NUMERIC   NOT NULL
+	'DROP TABLE IF EXISTS pet CASCADE',
+	'DROP TABLE IF EXISTS person CASCADE',
+	'DROP TABLE IF EXISTS empty_table CASCADE',
+	`CREATE TABLE person (
+		id          serial PRIMARY KEY,
+		first_name  varchar NOT NULL,
+		last_name   varchar,
+		gender      varchar(50) NOT NULL,
+		created_at  timestamp DEFAULT now() NOT NULL
 	)`,
-	`CREATE TABLE IF NOT EXISTS pet (
-		id       BIGSERIAL NOT NULL PRIMARY KEY,
-		name     TEXT      NOT NULL,
-		owner_id BIGINT    NOT NULL REFERENCES person(id),
-		species  TEXT      NOT NULL CHECK (species IN ('dog', 'cat', 'hamster'))
+	`CREATE TABLE pet (
+		id        serial PRIMARY KEY,
+		name      varchar NOT NULL UNIQUE,
+		owner_id  integer NOT NULL REFERENCES person(id) ON DELETE CASCADE,
+		species   varchar NOT NULL
+	)`,
+	'CREATE INDEX pet_owner_id_index ON pet(owner_id)',
+	`CREATE TABLE empty_table (
+		id   serial PRIMARY KEY,
+		name varchar
 	)`,
 ]
 
