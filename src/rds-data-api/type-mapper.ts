@@ -2,7 +2,7 @@ import type {
 	RDSDataAPIColumnMetadata,
 	RDSDataAPIField,
 	RDSDataAPISqlParameter,
-} from './rds-data-api-types'
+} from './config'
 
 export type RDSDataAPITypeMapper = {
 	mapQueryParameter(value: unknown): RDSDataAPISqlParameter

@@ -5,7 +5,6 @@ import type {
 	Driver,
 	QueryResult,
 } from 'kysely'
-import type { RDSDataAPIPostgresDialectConfig } from './config'
 import type {
 	CreateBeginTransactionCommand,
 	CreateCommitTransactionCommand,
@@ -14,8 +13,9 @@ import type {
 	RDSDataAPIClient,
 	RDSDataAPIColumnMetadata,
 	RDSDataAPIExecuteResult,
+	RDSDataAPIPostgresDialectConfig,
 	RDSDataAPISqlParameter,
-} from './rds-data-api-types'
+} from './config'
 import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIDriver implements Driver {
