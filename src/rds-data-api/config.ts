@@ -21,10 +21,14 @@ export type RDSDataAPIExecuteResult = {
 	transactionId?: string
 }
 
+type SendableCommand =
+	| RDSDataAPIExecuteStatementCommand
+	| RDSDataAPIBeginTransactionCommand
+	| RDSDataAPICommitTransactionCommand
+	| RDSDataAPIRollbackTransactionCommand
+
 export type RDSDataAPIClient = {
-	send(
-		command: RDSDataAPIExecuteStatementCommand,
-	): Promise<RDSDataAPIExecuteResult>
+	send(command: SendableCommand): Promise<RDSDataAPIExecuteResult>
 	destroy(): void
 }
 
@@ -32,7 +36,13 @@ export type CreateExecuteStatementCommand = (
 	input: RDSDataAPIExecuteStatementInput,
 ) => RDSDataAPIExecuteStatementCommand
 
-export type RDSDataAPIExecuteStatementCommand = object
+export type RDSDataAPIExecuteStatementCommand = {
+	input: {
+		sql: string | undefined
+		resourceArn: string | undefined
+		secretArn: string | undefined
+	}
+}
 
 export type RDSDataAPIExecuteStatementInput = {
 	sql: string
@@ -48,13 +58,24 @@ export type RDSDataAPIExecuteStatementInput = {
 export type CreateBeginTransactionCommand =
 	() => RDSDataAPIBeginTransactionCommand
 
-export type RDSDataAPIBeginTransactionCommand = object
+export type RDSDataAPIBeginTransactionCommand = {
+	input: {
+		resourceArn: string | undefined
+		secretArn: string | undefined
+	}
+}
 
 export type CreateCommitTransactionCommand = (
 	input: RDSDataAPICommitTransactionInput,
 ) => RDSDataAPICommitTransactionCommand
 
-export type RDSDataAPICommitTransactionCommand = object
+export type RDSDataAPICommitTransactionCommand = {
+	input: {
+		transactionId: string | undefined
+		resourceArn: string | undefined
+		secretArn: string | undefined
+	}
+}
 
 export type RDSDataAPICommitTransactionInput = { transactionId: string }
 
@@ -62,7 +83,13 @@ export type CreateRollbackTransactionCommand = (
 	input: RDSDataAPIRollbackTransactionInput,
 ) => RDSDataAPIRollbackTransactionCommand
 
-export type RDSDataAPIRollbackTransactionCommand = object
+export type RDSDataAPIRollbackTransactionCommand = {
+	input: {
+		transactionId: string | undefined
+		resourceArn: string | undefined
+		secretArn: string | undefined
+	}
+}
 
 export type RDSDataAPIRollbackTransactionInput = { transactionId: string }
 
