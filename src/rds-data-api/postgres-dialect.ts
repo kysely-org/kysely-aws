@@ -17,10 +17,10 @@ export class RDSDataAPIPostgresDialect implements Dialect {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 
 	constructor(config: RDSDataAPIPostgresDialectConfig) {
-		this.#config = {
+		this.#config = Object.freeze({
 			...config,
 			typeMapper: config.typeMapper ?? new DefaultRDSDataAPITypeMapper(),
-		}
+		})
 	}
 
 	createDriver(): Driver {

@@ -6,17 +6,12 @@ import type {
 	QueryResult,
 } from 'kysely'
 import type {
-	CreateBeginTransactionCommand,
-	CreateCommitTransactionCommand,
-	CreateExecuteStatementCommand,
-	CreateRollbackTransactionCommand,
 	RDSDataAPIClient,
 	RDSDataAPIColumnMetadata,
 	RDSDataAPIExecuteResult,
 	RDSDataAPIPostgresDialectConfig,
 	RDSDataAPISqlParameter,
 } from './config'
-import type { RDSDataAPITypeMapper } from './type-mapper'
 
 export class RDSDataAPIDriver implements Driver {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
@@ -38,10 +33,7 @@ export class RDSDataAPIDriver implements Driver {
 			throw new Error('Driver not initialised')
 		}
 
-		return new RDSDataAPIDatabaseConnection({
-			...this.#config,
-			client: this.#client,
-		})
+		return new RDSDataAPIDatabaseConnection(this.#client, this.#config)
 	}
 
 	async beginTransaction(
@@ -88,25 +80,21 @@ const resultSetOptions = {
 	longReturnType: 'LONG',
 } as const
 
-type DatabaseConnectionConfig = {
-	client: RDSDataAPIClient
-	typeMapper: RDSDataAPITypeMapper
-	executeStatementCommand: CreateExecuteStatementCommand
-	beginTransactionCommand: CreateBeginTransactionCommand
-	commitTransactionCommand: CreateCommitTransactionCommand
-	rollbackTransactionCommand: CreateRollbackTransactionCommand
-}
-
 class RDSDataAPIDatabaseConnection implements DatabaseConnection {
-	readonly #config: DatabaseConnectionConfig
+	readonly #client: RDSDataAPIClient
+	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 	#transactionId?: string
 
-	constructor(config: DatabaseConnectionConfig) {
+	constructor(
+		client: RDSDataAPIClient,
+		config: Required<RDSDataAPIPostgresDialectConfig>,
+	) {
+		this.#client = client
 		this.#config = config
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
-		const response = await this.#config.client.send(
+		const response = await this.#client.send(
 			this.#config.executeStatementCommand({
 				sql: compiledQuery.sql,
 				// compiledQuery.parameters are a `readonly unknown[]` - but we control them and can spread/coerce safely
@@ -169,7 +157,7 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	}
 
 	async beginTransaction(): Promise<void> {
-		const response = await this.#config.client.send(
+		const response = await this.#client.send(
 			this.#config.beginTransactionCommand(),
 		)
 
@@ -185,7 +173,7 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 			throw new Error('No transaction in progress - missing transactionId')
 		}
 
-		await this.#config.client.send(
+		await this.#client.send(
 			this.#config.commitTransactionCommand({
 				transactionId: this.#transactionId,
 			}),
@@ -199,7 +187,7 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 			throw new Error('No transaction in progress - missing transactionId')
 		}
 
-		await this.#config.client.send(
+		await this.#client.send(
 			this.#config.rollbackTransactionCommand({
 				transactionId: this.#transactionId,
 			}),
