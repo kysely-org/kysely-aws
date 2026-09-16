@@ -1,9 +1,12 @@
 import type {
 	AbortableOperationOptions,
+	AccessMode,
 	CompiledQuery,
 	DatabaseConnection,
 	Driver,
+	IsolationLevel,
 	QueryResult,
+	TransactionSettings,
 } from 'kysely'
 import type {
 	RDSDataAPIClient,
@@ -38,8 +41,13 @@ export class RDSDataAPIDriver implements Driver {
 
 	async beginTransaction(
 		connection: RDSDataAPIDatabaseConnection,
+		settings: TransactionSettings,
 	): Promise<void> {
 		await connection.beginTransaction()
+
+		if (settings.isolationLevel || settings.accessMode) {
+			await connection.setTransactionCharacteristics(settings)
+		}
 	}
 
 	async commitTransaction(
@@ -79,6 +87,21 @@ const resultSetOptions = {
 	decimalReturnType: 'STRING',
 	longReturnType: 'LONG',
 } as const
+
+const ISOLATION_LEVEL_STATEMENTS: Record<
+	Exclude<IsolationLevel, 'snapshot'>,
+	string
+> = {
+	'read committed': 'READ COMMITTED',
+	'read uncommitted': 'READ UNCOMMITTED',
+	'repeatable read': 'REPEATABLE READ',
+	serializable: 'SERIALIZABLE',
+}
+
+const ACCESS_MODE_STATEMENTS: Record<AccessMode, string> = {
+	'read only': 'READ ONLY',
+	'read write': 'READ WRITE',
+}
 
 class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	readonly #client: RDSDataAPIClient
@@ -193,5 +216,36 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 			}),
 		)
 		this.#transactionId = undefined
+	}
+
+	async setTransactionCharacteristics(
+		settings: TransactionSettings,
+	): Promise<void> {
+		const modes: string[] = []
+
+		if (settings.isolationLevel) {
+			if (settings.isolationLevel === 'snapshot') {
+				throw new Error('Snapshot isolation level not supported')
+			}
+
+			modes.push(
+				`ISOLATION LEVEL ${ISOLATION_LEVEL_STATEMENTS[settings.isolationLevel]}`,
+			)
+		}
+
+		if (settings.accessMode) {
+			modes.push(ACCESS_MODE_STATEMENTS[settings.accessMode])
+		}
+
+		if (modes.length === 0) {
+			return
+		}
+
+		await this.#client.send(
+			this.#config.executeStatementCommand({
+				sql: `SET TRANSACTION ${modes.join(', ')}`,
+				transactionId: this.#transactionId,
+			}),
+		)
 	}
 }

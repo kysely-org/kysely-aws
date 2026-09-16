@@ -46,9 +46,9 @@ export type RDSDataAPIExecuteStatementCommand = {
 
 export type RDSDataAPIExecuteStatementInput = {
 	sql: string
-	parameters: RDSDataAPISqlParameter[]
-	includeResultMetadata: true
-	resultSetOptions: {
+	parameters?: RDSDataAPISqlParameter[]
+	includeResultMetadata?: true
+	resultSetOptions?: {
 		decimalReturnType: 'STRING'
 		longReturnType: 'LONG'
 	}
