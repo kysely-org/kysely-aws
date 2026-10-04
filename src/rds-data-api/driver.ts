@@ -1,24 +1,24 @@
 import type {
 	AbortableOperationOptions,
+	AccessMode,
 	CompiledQuery,
 	DatabaseConnection,
 	Driver,
+	IsolationLevel,
 	QueryResult,
+	TransactionSettings,
 } from 'kysely'
-import type { RDSDataAPIPostgresDialectConfig } from './config'
 import type {
-	CreateExecuteStatementCommand,
 	RDSDataAPIClient,
 	RDSDataAPIColumnMetadata,
 	RDSDataAPIExecuteResult,
+	RDSDataAPIPostgresDialectConfig,
 	RDSDataAPISqlParameter,
-} from './rds-data-api-types'
-import type { RDSDataAPITypeMapper } from './type-mapper'
+} from './config'
 
 export class RDSDataAPIDriver implements Driver {
 	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
 	#client: RDSDataAPIClient | undefined
-	#connection: RDSDataAPIDatabaseConnection | undefined
 
 	constructor(config: Required<RDSDataAPIPostgresDialectConfig>) {
 		this.#config = config
@@ -36,23 +36,30 @@ export class RDSDataAPIDriver implements Driver {
 			throw new Error('Driver not initialised')
 		}
 
-		return (this.#connection ??= new RDSDataAPIDatabaseConnection({
-			client: this.#client,
-			typeMapper: this.#config.typeMapper,
-			executeStatementCommand: this.#config.executeStatementCommand,
-		}))
+		return new RDSDataAPIDatabaseConnection(this.#client, this.#config)
 	}
 
-	beginTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async beginTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+		settings: TransactionSettings,
+	): Promise<void> {
+		await connection.beginTransaction()
+
+		if (settings.isolationLevel || settings.accessMode) {
+			await connection.setTransactionCharacteristics(settings)
+		}
 	}
 
-	commitTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async commitTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+	): Promise<void> {
+		await connection.commitTransaction()
 	}
 
-	rollbackTransaction(): Promise<void> {
-		throw new Error('Method not implemented.')
+	async rollbackTransaction(
+		connection: RDSDataAPIDatabaseConnection,
+	): Promise<void> {
+		await connection.rollbackTransaction()
 	}
 
 	savepoint(): Promise<void> {
@@ -81,31 +88,43 @@ const resultSetOptions = {
 	longReturnType: 'LONG',
 } as const
 
-type DatabaseConnectionConfig = {
-	client: RDSDataAPIClient
-	typeMapper: RDSDataAPITypeMapper
-	executeStatementCommand: CreateExecuteStatementCommand
+const ISOLATION_LEVEL_STATEMENTS: Record<
+	Exclude<IsolationLevel, 'snapshot'>,
+	string
+> = {
+	'read committed': 'READ COMMITTED',
+	'read uncommitted': 'READ UNCOMMITTED',
+	'repeatable read': 'REPEATABLE READ',
+	serializable: 'SERIALIZABLE',
+}
+
+const ACCESS_MODE_STATEMENTS: Record<AccessMode, string> = {
+	'read only': 'READ ONLY',
+	'read write': 'READ WRITE',
 }
 
 class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 	readonly #client: RDSDataAPIClient
-	readonly #typeMapper: RDSDataAPITypeMapper
-	readonly #executeStatementCommand: CreateExecuteStatementCommand
+	readonly #config: Required<RDSDataAPIPostgresDialectConfig>
+	#transactionId?: string
 
-	constructor(config: DatabaseConnectionConfig) {
-		this.#client = config.client
-		this.#typeMapper = config.typeMapper
-		this.#executeStatementCommand = config.executeStatementCommand
+	constructor(
+		client: RDSDataAPIClient,
+		config: Required<RDSDataAPIPostgresDialectConfig>,
+	) {
+		this.#client = client
+		this.#config = config
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
 		const response = await this.#client.send(
-			this.#executeStatementCommand({
+			this.#config.executeStatementCommand({
 				sql: compiledQuery.sql,
 				// compiledQuery.parameters are a `readonly unknown[]` - but we control them and can spread/coerce safely
 				parameters: [...compiledQuery.parameters] as RDSDataAPISqlParameter[],
 				includeResultMetadata: true,
 				resultSetOptions,
+				transactionId: this.#transactionId,
 			}),
 		)
 
@@ -133,8 +152,8 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 
 	#getRows<R>(executeResult: RDSDataAPIExecuteResult): R[] {
 		const columnNames = this.#getColumnNames(executeResult.columnMetadata ?? [])
-		const records = executeResult.records
-		if (!records || records.length === 0) {
+		const { records } = executeResult
+		if (!records?.length || !columnNames.length) {
 			return []
 		}
 
@@ -147,15 +166,86 @@ class RDSDataAPIDatabaseConnection implements DatabaseConnection {
 				// is only actually dangerous if the RDS Data api starts to perform some
 				// wildly inconsistent behaviours (not returning one metadata per column
 				// or returning variable amounts of columns per row).
-				row[columnNames[i] as string] = this.#typeMapper.mapResponseField(
-					field,
-					executeResult.columnMetadata?.[i],
-				)
+				row[columnNames[i] as string] =
+					this.#config.typeMapper.mapResponseField(
+						field,
+						executeResult.columnMetadata?.[i],
+					)
 			}
 
 			rows.push(row as R)
 		}
 
 		return rows
+	}
+
+	async beginTransaction(): Promise<void> {
+		const response = await this.#client.send(
+			this.#config.beginTransactionCommand(),
+		)
+
+		if (!response.transactionId) {
+			throw new Error('BeginTransaction did not return a transactionId')
+		}
+
+		this.#transactionId = response.transactionId
+	}
+
+	async commitTransaction(): Promise<void> {
+		if (!this.#transactionId) {
+			throw new Error('No transaction in progress - missing transactionId')
+		}
+
+		await this.#client.send(
+			this.#config.commitTransactionCommand({
+				transactionId: this.#transactionId,
+			}),
+		)
+
+		this.#transactionId = undefined
+	}
+
+	async rollbackTransaction(): Promise<void> {
+		if (!this.#transactionId) {
+			throw new Error('No transaction in progress - missing transactionId')
+		}
+
+		await this.#client.send(
+			this.#config.rollbackTransactionCommand({
+				transactionId: this.#transactionId,
+			}),
+		)
+		this.#transactionId = undefined
+	}
+
+	async setTransactionCharacteristics(
+		settings: TransactionSettings,
+	): Promise<void> {
+		const modes: string[] = []
+
+		if (settings.isolationLevel) {
+			if (settings.isolationLevel === 'snapshot') {
+				throw new Error('Snapshot isolation level not supported')
+			}
+
+			modes.push(
+				`ISOLATION LEVEL ${ISOLATION_LEVEL_STATEMENTS[settings.isolationLevel]}`,
+			)
+		}
+
+		if (settings.accessMode) {
+			modes.push(ACCESS_MODE_STATEMENTS[settings.accessMode])
+		}
+
+		if (modes.length === 0) {
+			return
+		}
+
+		await this.#client.send(
+			this.#config.executeStatementCommand({
+				sql: `SET TRANSACTION ${modes.join(', ')}`,
+				transactionId: this.#transactionId,
+			}),
+		)
 	}
 }

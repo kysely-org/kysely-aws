@@ -1,10 +1,13 @@
 import {
+	BeginTransactionCommand,
+	CommitTransactionCommand,
 	DatabaseErrorException,
 	ExecuteStatementCommand,
 	RDSDataClient,
+	RollbackTransactionCommand,
 } from '@aws-sdk/client-rds-data'
 import { faker } from '@faker-js/faker'
-import { type Generated, Kysely, sql } from 'kysely'
+import { type Generated, type IsolationLevel, Kysely, sql } from 'kysely'
 import { expect } from 'vitest'
 import { RDSDataAPIPostgresDialect } from '../src/rds-data-api/postgres-dialect'
 import { getMigrationConfig } from './env'
@@ -47,6 +50,17 @@ const db = new Kysely<Database>({
 		client: () => client,
 		executeStatementCommand: (input) =>
 			new ExecuteStatementCommand({
+				...connection,
+				...input,
+			}),
+		beginTransactionCommand: () => new BeginTransactionCommand(connection),
+		commitTransactionCommand: (input) =>
+			new CommitTransactionCommand({
+				...connection,
+				...input,
+			}),
+		rollbackTransactionCommand: (input) =>
+			new RollbackTransactionCommand({
 				...connection,
 				...input,
 			}),
@@ -660,6 +674,207 @@ describe('Smoke tests', () => {
 			}
 
 			expect(error?.message).toContain('SQLState: 42601')
+		})
+	})
+
+	describe('transactions', () => {
+		it('Should COMMIT an INSERT', async () => {
+			const person = generatePerson({ first_name: faker.string.uuid() })
+			await db.transaction().execute(async (trx) => {
+				await trx.insertInto('person').values(person).execute()
+			})
+
+			const [row, ...moreRows] = await db
+				.selectFrom('person')
+				.select('id')
+				.where('first_name', '=', person.first_name)
+				.execute()
+
+			expect(moreRows).toHaveLength(0)
+			expect(row?.id).toBeGreaterThan(0)
+		})
+
+		it('Should ROLLBACK an INSERT', async () => {
+			const person = generatePerson({ first_name: faker.string.uuid() })
+			await expect(
+				db.transaction().execute(async (trx) => {
+					await trx.insertInto('person').values(person).execute()
+					throw new Error('rollback')
+				}),
+			).rejects.toThrow('rollback')
+
+			const rows = await db
+				.selectFrom('person')
+				.select('id')
+				.where('first_name', '=', person.first_name)
+				.execute()
+
+			expect(rows).toHaveLength(0)
+		})
+
+		describe('isolation levels', () => {
+			const SUPPORTED_ISOLATION_LEVELS = [
+				'read uncommitted',
+				'read committed',
+				'repeatable read',
+				'serializable',
+			] as const satisfies readonly Exclude<IsolationLevel, 'snapshot'>[]
+
+			it.each(
+				SUPPORTED_ISOLATION_LEVELS,
+			)('Should COMMIT an INSERT with "%s" isolation level', async (isolationLevel) => {
+				const person = generatePerson({ first_name: faker.string.uuid() })
+				await db
+					.transaction()
+					.setIsolationLevel(isolationLevel)
+					.execute(async (trx) => {
+						await trx.insertInto('person').values(person).execute()
+					})
+
+				const [row, ...moreRows] = await db
+					.selectFrom('person')
+					.select('id')
+					.where('first_name', '=', person.first_name)
+					.execute()
+
+				expect(moreRows).toHaveLength(0)
+				expect(row?.id).toBeGreaterThan(0)
+			})
+
+			it('Should keep a consistent snapshot under "repeatable read"', async () => {
+				const firstName = faker.string.uuid()
+
+				const { before, after } = await db
+					.transaction()
+					.setIsolationLevel('repeatable read')
+					.execute(async (trx) => {
+						const { count: beforeInsert } = await trx
+							.selectFrom('person')
+							.select((eb) => eb.fn.count<number>('id').as('count'))
+							.where('first_name', '=', firstName)
+							.executeTakeFirstOrThrow()
+
+						// Insert and commit a matching row from outside the transaction
+						await seedPerson(generatePerson({ first_name: firstName }))
+
+						const { count: afterInsert } = await trx
+							.selectFrom('person')
+							.select((eb) => eb.fn.count<number>('id').as('count'))
+							.where('first_name', '=', firstName)
+							.executeTakeFirstOrThrow()
+
+						return { before: beforeInsert, after: afterInsert }
+					})
+
+				expect(before).toBe(0)
+				expect(after).toBe(0)
+			})
+
+			it('Should see newly committed rows under "read committed"', async () => {
+				const firstName = faker.string.uuid()
+
+				const { before, after } = await db
+					.transaction()
+					.setIsolationLevel('read committed')
+					.execute(async (trx) => {
+						const { count: beforeInsert } = await trx
+							.selectFrom('person')
+							.select((eb) => eb.fn.count<number>('id').as('count'))
+							.where('first_name', '=', firstName)
+							.executeTakeFirstOrThrow()
+
+						await seedPerson(generatePerson({ first_name: firstName }))
+
+						const { count: afterInsert } = await trx
+							.selectFrom('person')
+							.select((eb) => eb.fn.count<number>('id').as('count'))
+							.where('first_name', '=', firstName)
+							.executeTakeFirstOrThrow()
+
+						return { before: beforeInsert, after: afterInsert }
+					})
+
+				expect(before).toBe(0)
+				expect(after).toBe(1)
+			})
+
+			it('Should reject the unsupported "snapshot" isolation level', async () => {
+				await expect(
+					db
+						.transaction()
+						.setIsolationLevel('snapshot')
+						.execute(async () => {
+							throw new Error('Should never reach here')
+						}),
+				).rejects.toThrow('Snapshot isolation level not supported')
+			})
+		})
+
+		describe('access modes', () => {
+			it('Should COMMIT an INSERT with "read write" access mode', async () => {
+				const person = generatePerson({ first_name: faker.string.uuid() })
+				await db
+					.transaction()
+					.setAccessMode('read write')
+					.execute(async (trx) => {
+						await trx.insertInto('person').values(person).execute()
+					})
+
+				const [row, ...moreRows] = await db
+					.selectFrom('person')
+					.select('id')
+					.where('first_name', '=', person.first_name)
+					.execute()
+
+				expect(moreRows).toHaveLength(0)
+				expect(row?.id).toBeGreaterThan(0)
+			})
+
+			it('Should reject an INSERT with "read only" access mode', async () => {
+				const person = generatePerson({ first_name: faker.string.uuid() })
+
+				let error: DatabaseErrorException | undefined
+				try {
+					await db
+						.transaction()
+						.setAccessMode('read only')
+						.execute(async (trx) => {
+							await trx.insertInto('person').values(person).execute()
+						})
+				} catch (e) {
+					if (e instanceof DatabaseErrorException) {
+						error = e as DatabaseErrorException
+					}
+				}
+
+				expect(error?.message).toContain('SQLState: 25006')
+
+				const rows = await db
+					.selectFrom('person')
+					.select('id')
+					.where('first_name', '=', person.first_name)
+					.execute()
+
+				expect(rows).toHaveLength(0)
+			})
+
+			it('Should COMMIT a SELECT with "serializable" and "read only"', async () => {
+				const person = await seedPerson(generatePerson())
+
+				const row = await db
+					.transaction()
+					.setIsolationLevel('serializable')
+					.setAccessMode('read only')
+					.execute(async (trx) => {
+						return trx
+							.selectFrom('person')
+							.select('first_name')
+							.where('id', '=', person.id)
+							.executeTakeFirstOrThrow()
+					})
+
+				expect(row.first_name).toBe(person.first_name)
+			})
 		})
 	})
 })
